@@ -1,0 +1,1818 @@
+/* ==========================================================================
+   Bella Vista Studios — Stylesheet
+   Struktur: Variablen, Basis, Layout-Grid, Komponenten, Sektionen, Responsive
+   ========================================================================== */
+
+:root {
+  --bg: #faf9f6;
+  --line: #d6d6d6;
+  --text: #1c1c1a;
+  --text-muted: #7a7871;
+  --black: #15140f;
+  --white: #ffffff;
+  /* Einzige Akzentfarbe der Seite: überall, wo etwas farblich markiert ist
+     (Buttons, Status-Punkt, Icon-Kreise, aktive/Hover-Zustände), wird dieses
+     Rosa verwendet — nie eine zweite Akzentfarbe daneben. */
+  --pink: #fa5a9e;
+  --radius-full: 999px;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --container-max: 1240px;
+  --frame-max: 1360px;
+}
+
+/* ---- Fonts ----
+   Lokal gehostet statt über fonts.googleapis.com geladen: sonst gehen
+   Besucher-IPs beim Seitenaufruf ohne Einwilligung an Google (DSGVO-Risiko,
+   in AT/DE bereits mehrfach abgemahnt). */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/inter-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/inter-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/inter-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../fonts/inter-800.woff2") format("woff2");
+}
+
+/* ---- Reset ---- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+button { font: inherit; cursor: pointer; }
+
+/* Kein Browser-Standard-Fokusring (blau) irgendwo auf der Seite — bei
+   Maus-Klick ohnehin unsichtbar, bei Tastatur-Navigation stattdessen ein
+   Ring in der Marken-Akzentfarbe (siehe --pink), konsistent mit allen
+   anderen interaktiven Elementen. */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+}
+
+/* ---- Scroll-Reveal ---- */
+/* Fade + leichtes Hochschieben beim ersten Sichtbarwerden, statt dass Text
+   und Elemente beim Scrollen sofort fertig dastehen. Die Klasse .reveal
+   wird automatisch von assets/js/scroll-reveal.js auf die passenden
+   Elemente angewendet, .is-visible schaltet per IntersectionObserver
+   einmalig um (bleibt danach sichtbar, kein erneutes Ausblenden beim
+   Zurückscrollen). Ohne JavaScript bleibt alles normal sichtbar, da die
+   Klasse dann nie gesetzt wird. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---- Grid-Rahmen (vertikale Linien links/rechts über die volle Seite) ---- */
+.frame {
+  max-width: var(--frame-max);
+  margin: 0 auto;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  /* Nur horizontales Padding — vertikaler Rhythmus kommt bewusst von
+     section/spezifischeren Klassen (.hero, .trusted, .footer usw.).
+     Als "padding"-Shorthand würde dies fälschlich auch oben/unten auf 0
+     setzen und dabei section { padding: 96px 0 } überschreiben, da ein
+     Klassenselektor immer stärker wiegt als der Element-Selektor "section" —
+     unabhängig von der Reihenfolge im Stylesheet. Genau das war der Bug. */
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+/* Horizontale Trennlinie zwischen Sektionen — bricht bewusst aus dem
+   begrenzten .frame aus und läuft über die komplette Viewport-Breite bis
+   zum Bildschirmrand. Zusammen mit den vertikalen .frame-Linien (die über
+   die gesamte Seitenhöhe laufen) ergibt das ein durchgehendes Gitter statt
+   einzelner, in sich geschlossener Kästen pro Sektion.
+   Kein overflow-x:hidden auf html/body (war früher hier, um den durch 100vw
+   theoretisch möglichen Scrollbar-Millimeter Overflow abzufangen) — das
+   bricht in Safari position:sticky auf .site-header (Safari macht daraus
+   intern auch einen Y-Scroll-Container, der Header hört auf zu kleben).
+   overflow-x:hidden auf diesem Element selbst würde das Problem ohnehin nicht
+   lösen (clippt nur eigene Kinder, nicht die eigene Box gegenüber dem
+   Elternelement). Bei Overlay-Scrollbars (macOS) tritt der Overflow gar nicht
+   erst auf; falls er auf anderen Systemen doch stört, gehört die Lösung in
+   eine JS-gemessene Scrollbar-Breite, nicht in einen html/body-Overflow-Hack. */
+.section-divider {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+  border-top: 1px solid var(--line);
+}
+
+section { padding: 96px 0; }
+
+/* ---- Typografie ---- */
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.section-heading {
+  font-size: clamp(32px, 4vw, 48px);
+}
+
+.section-heading .muted { color: var(--text-muted); font-weight: 500; }
+.section-heading .strong { color: var(--black); font-weight: 800; }
+
+.section-lede {
+  color: var(--text-muted);
+  font-size: 17px;
+  max-width: 520px;
+  margin-top: 16px;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 26px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 15px;
+  transition: opacity 0.15s ease;
+}
+
+.btn:hover { opacity: 0.85; }
+
+/* Rosa wird ausschließlich als Umrandung eingesetzt, nie als volle
+   Füllfläche. Bei Hover: leichter Zoom (vergrößert Rahmen + Text in einem
+   Zug), dazu eine dezente rosa Untermalung der Fläche (deutlich blasser als
+   die Umrandung selbst) sowie ein Glow um den Rahmen. */
+.btn-primary {
+  background: transparent;
+  color: var(--pink);
+  border: 1.5px solid var(--pink);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+  opacity: 1;
+  transform: scale(1.06);
+  background: rgba(240, 196, 211, 0.16);
+  box-shadow: 0 0 16px rgba(240, 196, 211, 0.7);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--pink);
+  border: 1.5px solid var(--pink);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-outline:hover {
+  opacity: 1;
+  transform: scale(1.06);
+  background: rgba(240, 196, 211, 0.16);
+  box-shadow: 0 0 16px rgba(240, 196, 211, 0.7);
+}
+
+/* ---- Header / Navigation ----
+   Die Pille ist die eigentliche Navigation und sitzt zentriert über die
+   volle Headerbreite (site-header: justify-content:center). Das Logo bleibt
+   links stehen, dafür aber absolut positioniert — so beeinflusst seine
+   Breite die Zentrierung der Pille nicht (sonst würde justify-content:center
+   den verbleibenden Platz NACH dem Logo zentrieren statt die volle Breite). */
+.site-header {
+  /* sticky ist selbst schon ein "positioniertes" Element (wie relative) —
+     .logo-mark kann sich also direkt darauf beziehen, ohne ein zusätzliches
+     position:relative, das sticky sonst überschreiben würde. */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 28px;
+  padding-bottom: 28px;
+  /* Kein var(--bg) mehr als Deckfarbe — sonst bleibt beim Scrollen immer
+     ein Balken in Seitenfarbe stehen. Und bewusst KEIN eigener
+     backdrop-filter hier (war testweise drin): ein Blur auf dem Header
+     selbst ist über seine ganze Höhe gleich stark und hört an dessen
+     Unterkante hart auf — genau der harte Schnitt, den .header-fade
+     darunter eigentlich vermeiden soll. Den gesamten Blur-Verlauf
+     übernimmt jetzt ausschließlich .header-fade (Pille/Logo bleiben
+     lesbar, weil .nav-pill ihren eigenen weißen Hintergrund mitbringt). */
+}
+
+/* Beim Scrollen verschwindet Inhalt (z.B. Projekt-Bilder) sonst hart hinter
+   der blickdichten Sticky-Kante. Ein reiner Farbverlauf (mehrere frühere
+   Versuche, siehe Git-Historie) zeigt über kontrastreichen Fotos trotzdem
+   eine sichtbare Kante — das Auge erkennt den Kontrastsprung unabhängig
+   von der Kurvenform, und jede Deckfarbe hinterlässt einen sichtbaren
+   Balken. Stattdessen wird das Bild zur Kante hin zunehmend unscharf statt
+   überblendet, keine einzige Ebene hat eine Hintergrundfarbe.
+   Zwei Bugs sorgten davor dafür, dass Änderungen hier praktisch unsichtbar
+   blieben: (1) fehlendes -webkit-mask-image — ohne Präfix ignorierte
+   Safari die Maske komplett, jede Ebene war über ihre volle Fläche
+   sichtbar statt auszulaufen; (2) .site-header hatte selbst noch einen
+   flachen backdrop-filter (siehe .site-header oben, jetzt entfernt) — ein
+   gleichmäßiger Blur ohne jeden Verlauf, der an der Header-Unterkante hart
+   aufhörte und jede Anpassung hier optisch komplett überdeckt hat. Beides
+   behoben: .header-fade ist jetzt die einzige Blur-Quelle.
+   top:0 statt top:100%: der Header selbst hat kein eigenes Blur mehr, war
+   also über seine ganze Höhe (Logo/Pille-Bereich, ca. 150px) komplett
+   scharf — der Verlauf setzte dadurch sichtbar erst UNTER dem Header ein
+   statt an der obersten Bildkante. Jetzt beginnt .header-fade schon ganz
+   oben (hinter Logo/Pille).
+   Höhe bewusst moderat (180px), nicht die volle Header-Höhe + alte
+   Auslauf-Strecke (das wären ~320px gewesen): .header-fade ist absolut
+   positioniert und wird NICHT vom Header-Rahmen abgeschnitten, reicht bei
+   320px also weit in den Hero-Bereich hinein und hätte dort den Badge
+   ("Available for new projects", startet ca. bei 210px) mitgeblurrt. */
+.header-fade {
+  /* left:0/right:0 wären relativ zur Padding-Box von .site-header — der
+     Header trägt aber selbst die Klasse .container (max-width: 1240px,
+     zentriert). Im Querformat/breiten Viewport bleibt dann links/rechts
+     ein Rand ohne Blur übrig. Gleicher 100vw-Trick wie bei .section-divider:
+     da .container per margin:auto exakt auf der Viewport-Mitte zentriert
+     ist, landet left:50% trotzdem auf der echten Bildschirmmitte. */
+  position: absolute;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  top: 0;
+  /* Sanfter (max. Blur 3px → 2px) und kürzere Reichweite (180px → 130px)
+     als zuvor. */
+  height: 130px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.header-fade span { position: absolute; inset: 0; }
+
+.header-fade span:nth-child(1) {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 15%, transparent 45%);
+  mask-image: linear-gradient(to bottom, black 0%, black 15%, transparent 45%);
+}
+
+.header-fade span:nth-child(2) {
+  backdrop-filter: blur(1.6px);
+  -webkit-backdrop-filter: blur(1.6px);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 55%);
+  mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 55%);
+}
+
+.header-fade span:nth-child(3) {
+  backdrop-filter: blur(1.2px);
+  -webkit-backdrop-filter: blur(1.2px);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 62%);
+  mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 62%);
+}
+
+.header-fade span:nth-child(4) {
+  backdrop-filter: blur(0.8px);
+  -webkit-backdrop-filter: blur(0.8px);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 72%);
+  mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 72%);
+}
+
+.header-fade span:nth-child(5) {
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
+  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 85%);
+}
+
+.header-fade span:nth-child(6) {
+  backdrop-filter: blur(0.3px);
+  -webkit-backdrop-filter: blur(0.3px);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+}
+
+/* Gespiegelte Variante am unteren Bildschirmrand. Anders als .header-fade
+   hängt sie nicht an einem position:sticky-Element (es gibt keine fixe
+   Footer-Leiste) — deshalb position:fixed direkt an bottom:0, damit sie wie
+   der Header dauerhaft am Viewport-Rand klebt, während der Rest der Seite
+   darunter/dahinter wegscrollt. Gleiche Blur-Werte wie oben, nur die
+   Masken-Richtung ist umgedreht (to top statt to bottom): stärkster Blur an
+   der Unterkante (0% von unten gezählt), läuft nach oben hin aus. */
+.footer-fade {
+  position: fixed;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  bottom: 0;
+  /* Gleiche Reduktion wie bei .header-fade: sanfter und kürzer. */
+  height: 130px;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.footer-fade span { position: absolute; inset: 0; }
+
+.footer-fade span:nth-child(1) {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 15%, transparent 45%);
+  mask-image: linear-gradient(to top, black 0%, black 15%, transparent 45%);
+}
+
+.footer-fade span:nth-child(2) {
+  backdrop-filter: blur(1.6px);
+  -webkit-backdrop-filter: blur(1.6px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 25%, transparent 55%);
+  mask-image: linear-gradient(to top, black 0%, black 25%, transparent 55%);
+}
+
+.footer-fade span:nth-child(3) {
+  backdrop-filter: blur(1.2px);
+  -webkit-backdrop-filter: blur(1.2px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 35%, transparent 62%);
+  mask-image: linear-gradient(to top, black 0%, black 35%, transparent 62%);
+}
+
+.footer-fade span:nth-child(4) {
+  backdrop-filter: blur(0.8px);
+  -webkit-backdrop-filter: blur(0.8px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 45%, transparent 72%);
+  mask-image: linear-gradient(to top, black 0%, black 45%, transparent 72%);
+}
+
+.footer-fade span:nth-child(5) {
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 60%, transparent 85%);
+  mask-image: linear-gradient(to top, black 0%, black 60%, transparent 85%);
+}
+
+.footer-fade span:nth-child(6) {
+  backdrop-filter: blur(0.3px);
+  -webkit-backdrop-filter: blur(0.3px);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 75%, transparent 100%);
+  mask-image: linear-gradient(to top, black 0%, black 75%, transparent 100%);
+}
+
+.logo-mark {
+  position: absolute;
+  /* z-index aus demselben Grund wie bei .nav-pill: sonst erfasst
+     .header-fades backdrop-filter auch das Logo selbst. */
+  z-index: 2;
+  /* left:0 würde an der Padding-Kante von .site-header (selbst .container)
+     ausgerichtet, also VOR dem 32px-Padding sitzen — das Logo läge dadurch
+     näher am Rand als jeglicher Inhalt im Fließtext. Gleicher Wert wie
+     .container padding-left, damit beide bündig sind. */
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+/* mix-blend-mode: difference (echtes Pixel-Invertieren) wurde getestet und
+   verworfen: WebKit berechnet Blend-Modi auf Nachfahren von position:sticky
+   ODER position:fixed nachweislich nicht (mit vier isolierten Testfällen
+   bestätigt) — reiner Browser-Bug, kein CSS-Fix möglich. Stattdessen
+   ermittelt assets/js/logo-contrast.js per Canvas die Helligkeit der Bilder,
+   die gerade hinter dem Logo liegen, und setzt bei dunklem Hintergrund die
+   Klasse is-on-dark, die das Logo per Filter aufhellt. */
+.logo-mark img {
+  height: 92px;
+  width: auto;
+  filter: brightness(1);
+  transition: filter 0.25s ease;
+}
+.logo-mark.is-on-dark img {
+  /* brightness(0) macht die Form vollständig schwarz (Transparenz bleibt
+     erhalten), invert(1) dreht das anschließend auf reines Weiß — so
+     braucht es keine zweite Logo-Datei für die helle Variante. */
+  filter: brightness(0) invert(1);
+}
+
+.nav-pill {
+  /* z-index nötig, obwohl die Pille im Markup NACH .header-fade steht:
+     backdrop-filter erfasst offenbar auch später gezeichnete Geschwister
+     im selben Stacking-Kontext, DOM-Reihenfolge allein reichte nicht, um
+     die Pille vom Blur auszunehmen — sie wirkte dadurch selbst verwaschen. */
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  padding: 10px 10px 10px 10px;
+  box-shadow: 0 2px 12px rgba(20, 19, 15, 0.04);
+  transition: gap 0.3s ease;
+}
+
+/* Kompakte Pille beim Scrollen (Klasse kommt von assets/js/header-scroll.js):
+   Work/Services/Team klappen ein, B-Monogramm und Contact rücken zusammen.
+   Hover auf die Pille — auch im kompakten Zustand — klappt sie wieder auf. */
+.nav-pill.is-compact:not(:hover) { gap: 10px; }
+
+/* BVS-Reiter: nur noch der Monogramm-Kreis, ohne Namenstext und ohne
+   Trennstrich zur restlichen Navigation — sitzt einfach im normalen
+   Pillen-Abstand (.nav-pill gap) vor "Work". */
+.nav-brand { display: flex; align-items: center; }
+
+.nav-brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--pink);
+  color: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-brand:hover .nav-brand-mark {
+  transform: scale(1.12);
+  background: rgba(240, 196, 211, 0.16);
+  box-shadow: 0 0 12px rgba(240, 196, 211, 0.7);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 400px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-links a:hover { color: var(--pink); }
+
+.nav-pill.is-compact:not(:hover) .nav-links {
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-cta {
+  background: transparent;
+  color: var(--pink);
+  border: 1.5px solid var(--pink);
+  padding: 8.5px 18.5px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-cta:hover {
+  transform: scale(1.06);
+  background: rgba(240, 196, 211, 0.16);
+  box-shadow: 0 0 14px rgba(240, 196, 211, 0.7);
+}
+
+/* Mobiles Menü ohne JavaScript (Checkbox-Trick) */
+.nav-toggle { display: none; }
+.nav-toggle-label { display: none; }
+
+/* ---- Hero ---- */
+.hero {
+  padding-top: 64px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--white);
+}
+
+/* Ausnahme vom sonstigen Rosa-Akzent: der Punkt zeigt einen echten
+   Status ("verfügbar für neue Projekte") — dafür bleibt er grün und leuchtet
+   dauerhaft, nicht nur bei Hover. */
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #35c46a;
+  box-shadow: 0 0 8px rgba(53, 196, 106, 0.9);
+}
+
+.hero-headline {
+  margin-top: 24px;
+  font-size: clamp(44px, 6vw, 76px);
+}
+
+.hero-headline .muted { color: var(--text-muted); font-weight: 500; display: block; }
+.hero-headline .strong { color: var(--black); font-weight: 800; display: block; }
+
+.hero-text {
+  margin-top: 24px;
+  max-width: 480px;
+  color: var(--text);
+  font-size: 17px;
+}
+
+.hero-text strong { font-weight: 700; }
+
+.hero-cta { margin-top: 32px; }
+
+.hero-visual {
+  position: relative;
+  height: 420px;
+}
+
+/* Unsichtbare Platzhalter — markieren nur, wo die 4 echten Projektbilder beim
+   Laden der Seite "ankern". assets/js/scroll-effects.js liest ihre Position aus
+   und lässt die tatsächlichen Bilder (aus dem Projekte-Raster weiter unten) beim
+   Scrollen dorthin und wieder zurück in ihre Rasterposition gleiten. Es gibt also
+   jedes Bild nur einmal im DOM — hier steht nur ein Platzhalter für die Messung. */
+.hero-slot {
+  position: absolute;
+  width: 44%;
+  aspect-ratio: 4/5;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.hero-slot:nth-child(1) { top: 14%; left: 14%; }
+.hero-slot:nth-child(2) { top: 6%;  left: 27%; }
+.hero-slot:nth-child(3) { top: 10%; left: 40%; }
+.hero-slot:nth-child(4) { top: 16%; left: 53%; }
+
+/* ---- Trusted by ---- */
+.trusted {
+  /* Nur vertikales Padding als Shorthand ("40px 0" würde links/rechts auf 0
+     setzen und damit das .container padding-left/right überschreiben —
+     "Trusted by:" säße dann bündig am Rand statt auf Höhe von Hero-Text
+     & Co. Gleicher Bug/Fix wie beim .container-Kommentar oben. */
+  padding-top: 40px;
+  padding-bottom: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.trusted-label {
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Logo-Marquee: läuft endlos nach links. Der Track enthält die Logo-Liste
+   zweimal hintereinander (siehe HTML) — bei Verschiebung um genau -50%
+   landet die zweite Kopie exakt dort, wo die erste begonnen hat, wodurch
+   der Übergang unsichtbar bleibt. An den Rändern blendet eine Masken-
+   Gradient die Logos sanft aus, statt sie hart abzuschneiden. */
+.trusted-marquee {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
+}
+
+.trusted-track {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  width: max-content;
+  animation: trusted-scroll 24s linear infinite;
+}
+
+.trusted-marquee:hover .trusted-track {
+  animation-play-state: paused;
+}
+
+/* Client-Logos: einheitliche Höhe, Breite ergibt sich proportional aus dem
+   jeweiligen Seitenverhältnis. Graustufen + reduzierte Deckkraft sorgen für
+   ein ruhiges, einheitliches Bild trotz sehr unterschiedlicher Logo-Formen
+   (breite Wortmarken vs. das quadratischere Bergisel-Logo). */
+.trusted-logo {
+  height: 34px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+/* Bergisel-Logo ist quadratischer als die übrigen Wortmarken und wirkt bei
+   gleicher Höhe optisch kleiner — daher deutlich größer skaliert. */
+.trusted-logo--bergisel {
+  height: 76px;
+  max-width: 200px;
+}
+
+/* Feinjustierung der optischen Größe je Logo — gleiche Pixel-Höhe wirkt je
+   nach Wortmarke/Form unterschiedlich groß. */
+.trusted-logo--corthea { height: 26px; }
+.trusted-logo--agrar-tirol { height: 26px; }
+.trusted-logo--autopark { height: 42px; }
+
+/* Polestar-Logo sitzt mit viel Leerraum auf quadratischer Canvas (Icon +
+   Wortmarke sehr klein mittig) und wirkt bei der Basis-Höhe kaum lesbar. */
+.trusted-logo--polestar {
+  height: 138px;
+  max-width: 260px;
+}
+
+/* Dust-Logo ist eine sehr schlanke, kleinteilige Wortmarke — wirkt bei
+   Basis-Höhe im Vergleich zu den übrigen Logos etwas klein. */
+.trusted-logo--dust {
+  height: 44px;
+}
+
+@keyframes trusted-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trusted-track { animation: none; }
+}
+
+/* ---- Projekte-Grid ---- */
+.projects-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.projects-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.project-card {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  box-shadow: 0 12px 32px rgba(20, 19, 15, 0.1);
+  transition: box-shadow 0.5s ease;
+  /* Kein Hintergrund: solange das Bild noch unterwegs ist (siehe Scroll-Effekt
+     unten), soll hier wirklich nichts zu sehen sein — kein Platzhalter-Kasten. */
+}
+
+.project-card:hover { box-shadow: 0 16px 40px rgba(20, 19, 15, 0.16); }
+
+/* Abdunkelnder Schleier über dem Foto bei Hover — sorgt für genug Kontrast,
+   damit das weiße Kunden-Logo (siehe .project-client-logo) lesbar ist.
+   Als ::before generiert, damit es unterhalb von Tag/Logo/Overlay bleibt
+   (generierter Inhalt steht im Stacking immer vor den echten Kindern). */
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 11, 8, 0);
+  transition: background 0.6s ease;
+}
+
+.project-card:hover::before { background: rgba(12, 11, 8, 0.4); }
+
+/* Scroll-Effekt: assets/js/scroll-effects.js setzt auf dem Bild direkt ein
+   Inline-transform, das beim Scrollen von der Hero-Position in die finale
+   Rasterposition übergeht. Solange das Bild unterwegs ist (Klasse "js-morph"
+   auf .projects-grid, ohne "is-docked"), bleiben Tag und Overlay unsichtbar —
+   erst nach Ankunft blenden sie sanft ein. Ohne JavaScript/auf Mobile/bei
+   reduzierter Bewegungspräferenz bleiben diese Klassen ungesetzt und alles
+   ist von Anfang an normal sichtbar. */
+.projects-grid.js-morph .project-overlay {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.projects-grid.js-morph.is-docked .project-overlay {
+  opacity: 1;
+}
+
+/* Der eigene box-shadow der Karte (siehe .project-card oben) macht die noch
+   leere Box sichtbar, solange das Bild als "fixed" Element woanders unterwegs
+   ist — genau der Platzhalter-Effekt, den der Kommentar dort eigentlich
+   ausschließen soll. Also: kein Schatten, bis "is-docked" gesetzt ist. */
+.projects-grid.js-morph .project-card,
+.projects-grid.js-morph .project-card:hover {
+  box-shadow: none;
+}
+
+.projects-grid.js-morph.is-docked .project-card {
+  box-shadow: 0 12px 32px rgba(20, 19, 15, 0.1);
+}
+
+.projects-grid.js-morph.is-docked .project-card:hover {
+  box-shadow: 0 16px 40px rgba(20, 19, 15, 0.16);
+}
+
+/* Hover-Effekte (Blur + Kunden-Logo) sollen erst greifen, wenn das Bild an
+   seiner finalen Rasterposition angekommen ist ("is-docked") — vorher liegt
+   an der Kartenposition noch kein echtes Bild (das fliegt gerade woanders
+   als "fixed" Element), ein Hover-Effekt dort sähe wie ein leerer
+   Platzhalter aus. Höhere Spezifität überschreibt die Basis-Hover-Regeln
+   unten, solange .is-docked noch fehlt; danach gewinnt die dritte Regel
+   (noch spezifischer) und schaltet den Effekt wieder frei. */
+.projects-grid.js-morph .project-card:hover::before {
+  background: rgba(12, 11, 8, 0);
+}
+
+.projects-grid.js-morph .project-card:hover img:not(.project-client-logo) {
+  transform: none;
+  filter: none;
+}
+
+.projects-grid.js-morph .project-card:hover .project-client-logo {
+  opacity: 0;
+}
+
+.projects-grid.js-morph.is-docked .project-card:hover::before {
+  background: rgba(12, 11, 8, 0.4);
+}
+
+.projects-grid.js-morph.is-docked .project-card:hover img:not(.project-client-logo) {
+  transform: scale(1.04);
+  filter: blur(1px);
+}
+
+.projects-grid.js-morph.is-docked .project-card:hover .project-client-logo {
+  opacity: 1;
+}
+
+.project-card img:not(.project-client-logo) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+.project-card:hover img:not(.project-client-logo) {
+  transform: scale(1.04);
+  filter: blur(1px);
+}
+
+/* Kunden-Logo (weiße Variante), erscheint zentriert und nur bei Hover —
+   siehe project-card::before für den abdunkelnden Schleier darunter.
+   Die Quelldateien in assets/img/clients/white/ wurden auf ihre sichtbare
+   Zeichnung zugeschnitten (kein transparenter Leerraum mehr am Rand). Damit
+   unterschiedlich geformte Logos (breite Wortmarke vs. quadratisches
+   Icon+Wortmarke-Lockup) trotzdem ungefähr die gleiche Fläche einnehmen,
+   ist die Box pro Logo so berechnet, dass max-width × max-height ≈ konstant
+   bleibt (Fläche = Breite × Höhe, an das jeweilige Seitenverhältnis
+   angepasst) — bei jeder Größenänderung also beide Werte gemeinsam anpassen,
+   nicht nur einen. */
+.project-client-logo {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: auto;
+  height: auto;
+  max-width: 42%;
+  max-height: 30%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.project-card:hover .project-client-logo { opacity: 1; }
+
+.project-client-logo--agrar-tirol { max-width: 40%; max-height: 10.5%; }
+.project-client-logo--autopark    { max-width: 40%; max-height: 12%; }
+.project-client-logo--corthea     { max-width: 40%; max-height: 10%; }
+.project-client-logo--intermezzo  { max-width: 40%; max-height: 10.5%; }
+.project-client-logo--lightweight { max-width: 46%; max-height: 15%; }
+.project-client-logo--polestar    { max-width: 24%; max-height: 23.5%; }
+.project-client-logo--dust        { max-width: 36%; max-height: 16%; }
+.project-client-logo--bergisel    { max-width: 26%; max-height: 24%; }
+
+.project-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--white);
+  background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0));
+}
+
+.project-overlay .name { font-weight: 700; font-size: 18px; }
+.project-overlay .view { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; opacity: 0.9; }
+
+.projects-more {
+  margin-top: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+/* "View All Projects" auf der Startseite lädt nicht mehr projekte.html,
+   sondern klappt die restlichen Karten direkt im selben Grid auf
+   (siehe assets/js/projects-expand.js). */
+.project-card--extra { display: none; }
+.projects-grid.show-all .project-card--extra { display: block; }
+
+/* Button statt Link: native Button-Defaults zurücksetzen, .btn/.btn-outline
+   übernehmen den Rest der Optik unverändert. */
+button.btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ---- Services ---- */
+.services-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  gap: 64px;
+}
+
+/* Linke Spalte: Überschrift bleibt oben an ihrer gewohnten Stelle, die
+   Toolbox darunter bekommt den kompletten restlichen Platz (flex: 1) und
+   zentriert sich selbst darin vertikal — dadurch sitzt sie links neben der
+   Mitte der Service-Liste, ohne dass die Überschrift ihre Position verliert. */
+.services-intro {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Programme, mit denen wir arbeiten (siehe index.html #leistungen). Eigene
+   Badges statt eingebetteter Marken-Logo-Dateien (keine Lizenzfragen), aber
+   in den jeweils echten, wiedererkennbaren Icon-Farben der Programme (siehe
+   .toolbox-badge--*) statt einheitlich schwarz — genau wie Adobes eigene
+   App-Icons selbst aufgebaut sind. */
+.toolbox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* Kreisförmig statt als Raster. Die Rotation läuft über assets/js/
+   toolbox-orbit.js (ein einzelner requestAnimationFrame-Loop, der pro
+   Frame Icon-Position und Label-Seite aus EINEM Winkel berechnet). Vorher
+   liefen dafür zwei getrennte CSS-Keyframe-Animationen (Ring dreht,
+   Badge dreht exakt gegenläufig zurück), die bei jedem Pausieren/
+   Fortsetzen leicht auseinanderlaufen konnten — das war das sichtbare
+   Ruckeln. Die Werte unten (rotate + translateX, per --angle) sind nur
+   noch die statische Grundstellung ohne JavaScript. */
+.toolbox-orbit-wrap {
+  position: relative;
+  left: 28px;
+  width: 216px;
+  height: 216px;
+  margin: 18px auto 0;
+}
+
+.toolbox-orbit {
+  position: absolute;
+  inset: 0;
+}
+
+.toolbox-orbit-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--angle)) translateX(84px);
+  will-change: transform;
+}
+
+.toolbox-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  transform: rotate(calc(-1 * var(--angle)));
+}
+
+/* Sobald das Script läuft, übernimmt es die Positionierung per translate()
+   direkt am Item (siehe toolbox-orbit.js) und die Badges brauchen keine
+   Gegenrotation mehr, weil sie dann nicht mehr über rotate() mitgedreht
+   werden. */
+.toolbox-orbit-wrap.is-active .toolbox-badge {
+  transform: none;
+}
+
+/* Programmname, nur bei Hover über dem Icon sichtbar, ohne Hintergrund —
+   sitzt je nach Kreisseite links oder rechts daneben (siehe toolbox-
+   orbit.js für die Seiten-Umschaltung). Badge und Label sind im Markup
+   direkte Geschwister, das erlaubt die Sichtbarkeit rein per CSS über den
+   Adjacent-Sibling-Selektor, ganz ohne JS-Hover-Handling. */
+.toolbox-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.toolbox-badge:hover + .toolbox-label { opacity: 1; }
+.toolbox-label--right { transform: translate(36px, -50%); }
+.toolbox-label--left  { transform: translate(calc(-100% - 36px), -50%); }
+
+/* Jeweils die echte Icon-Grundfarbe des Programms. */
+.toolbox-badge--ae { background: #00005b; color: #9999ff; }
+.toolbox-badge--ps { background: #001e36; color: #31c5f0; }
+.toolbox-badge--dr { background: #1a1a1a; color: #ffffff; }
+.toolbox-badge--lr { background: #001e36; color: #31a8ff; }
+.toolbox-badge--id { background: #49021f; color: #ff3366; }
+.toolbox-badge--n  { background: #ffffff; color: #15140f; border: 1.5px solid var(--line); }
+
+/* Liste steht untereinander (nicht als Reihe) — jeder Eintrag klappt beim
+   Hover oder Klick direkt an Ort und Stelle auf, die Nachbarn rücken dabei
+   auseinander, statt dass der Text als schwebende Karte darüber liegt. Das
+   Aufklappen selbst läuft komplett über CSS (grid-template-rows von 0fr auf
+   1fr auf .service-desc-wrap) — kein JS nötig außer für den Klick-Toggle
+   und die ARIA-Attribute (siehe services-accordion.js). */
+.services-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-item {
+  /* min-height:0 hebt den Flex-Standard (min-height:auto) auf — sonst kann
+     .service-desc-wrap trotz grid-template-rows:0fr nicht vollständig auf
+     0 zusammenklappen und die erste Zeile des Texts blieb sichtbar. */
+  min-height: 0;
+}
+
+.service-trigger {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 4px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.service-trigger:hover,
+.service-trigger:focus-visible,
+.service-item.is-open .service-trigger {
+  background: var(--bg);
+}
+
+.service-trigger h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.service-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--pink);
+  color: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  transition: box-shadow 0.2s ease;
+}
+
+.service-trigger:hover .service-icon,
+.service-item.is-open .service-icon {
+  box-shadow: 0 0 12px rgba(240, 196, 211, 0.7);
+}
+
+/* Aufklapp-Technik: der Wrapper ist ein Grid mit genau einer Zeile, deren
+   Höhe (0fr → 1fr) animiert wird. min-height:0 auf dem Kind ist nötig,
+   sonst verhindert die Grid-Standardgröße (min-height:auto) das
+   Zusammenklappen auf 0. */
+.service-desc-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+
+.service-desc {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 4px 20px calc(40px + 16px);
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.service-item:hover .service-desc-wrap,
+.service-item.is-open .service-desc-wrap {
+  grid-template-rows: 1fr;
+}
+
+/* ---- Team ---- */
+.team-grid {
+  /* Etwas Platz oben: bei Hover wachsen die Fotos über die Kartenkante
+     hinaus (siehe .team-cutout) und brauchen dafür Raum. */
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* Eine Spalte = Name/Rolle (.team-cutout-info) + Karte (.team-card--cutout)
+   darunter, als zwei getrennte Elemente statt Text in der Karte. So bleibt
+   der Pop-out-Effekt (siehe .team-cutout:hover) wirklich auf die Karte
+   beschränkt und wächst in den Freiraum darüber hinein, statt Text
+   innerhalb derselben Box zu überlappen. */
+.team-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.team-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  background: var(--white);
+  box-shadow: 0 8px 24px rgba(20, 19, 15, 0.05);
+}
+
+.team-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--pink);
+  color: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.team-card h3 { font-size: 17px; margin-bottom: 4px; }
+.team-card p { color: var(--text-muted); font-size: 14px; }
+
+/* Name/Rolle: eigenständiger Block OBERHALB der Karte (siehe .team-col),
+   kein Teil von deren Rahmen/Hintergrund/Schatten — dadurch schwebt der
+   Text nie vor dem Gesicht, und der Hover-Pop-out (siehe .team-cutout)
+   wächst sichtbar aus der Karte heraus in genau diesen Freiraum hinein. */
+.team-cutout-info {
+  padding: 0 4px 14px;
+}
+
+.team-cutout-info h3 { font-size: 18px; margin-bottom: 2px; }
+.team-cutout-info p { font-size: 14px; color: var(--text-muted); }
+
+/* Foto-Karten (Leo, Carlo, Henry): nebeneinander im 3er-Raster, deutlich
+   flacher als ein Quadrat (aspect-ratio 2/1, siehe .team-cutout-frame). Das
+   Foto behält dabei immer sein echtes Seitenverhältnis (900/752, siehe
+   .team-cutout) — es wird nirgends gestreckt/verzerrt und ist immer
+   vollständig sichtbar (kein Zuschnitt). Im Ruhezustand endet es exakt an
+   der Kante von .team-cutout-frame; erst bei Hover wächst es gleichmäßig
+   (x und y zusammen) und ragt oben heraus. Per Klick öffnet sich die
+   Lightbox (.team-modal) mit großem Bild + Bio. */
+.team-card--cutout {
+  padding: 0;
+  overflow: visible;
+}
+
+.team-cutout-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+}
+
+/* Zuschnitt-Box: 40% höher als der Frame, aber unten/links/rechts exakt an
+   dessen Kante fixiert (bottom:0 + height:140% lässt die zusätzliche Höhe
+   ausschließlich nach oben wachsen). overflow:hidden kappt seitliches und
+   unteres Herauswachsen beim Hover also hart, während oben bis zu 40%
+   Frame-Höhe Luft für den Pop-out bleibt. Bewusst kein clip-path: dessen
+   Zusammenspiel mit transform auf einem Kind-Element ist in Safari
+   unzuverlässig (Clip greift dort teils nicht) — ein normales
+   overflow:hidden auf einer überdimensionierten Box ist robust in jedem
+   Browser. */
+.team-cutout-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 140%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.team-cutout {
+  /* Höhe statt Breite als Basis: 100% des Frames (= 1/1.4 der 140%-Maske),
+     damit das Foto im Ruhezustand exakt auf Frame-Höhe endet. Die Breite
+     ergibt sich automatisch aus aspect-ratio (echtes Seitenverhältnis der
+     Fotos, 900×752) — das Foto bleibt dadurch immer proportional und ist
+     komplett sichtbar, nichts wird zugeschnitten oder verzerrt. Weil das
+     Foto dadurch schmaler als der Frame ist, bleibt beim gleichmäßigen
+     Hoch-Skalieren auf Hover reichlich Abstand zur linken/rechten Kante.
+     transform-origin unten sorgt dafür, dass die Unterkante beim Hover fix
+     bleibt. Die Unterkante bleibt bewusst eckig (kein Radius), damit das
+     transparente PNG dort hart abschließt statt abgerundet zu wirken. */
+  position: relative;
+  height: 71.43%;
+  aspect-ratio: 900 / 752;
+  border-radius: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transform-origin: 50% 100%;
+  transition: transform 0.35s ease;
+  /* Safari/iOS geben Buttons sonst ein eigenes graues Aussehen (Rahmen +
+     Hintergrund) — ohne diese Zeile blitzt genau das hinter dem Foto durch. */
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Kein Fokusring hier: team-modal.js setzt den Fokus beim Schließen des
+   Modals per JS zurück auf die Kachel (siehe .team-cutout.is-active unten),
+   damit Tastatur-Nutzer dort weitermachen können. Ohne diese Zeile blitzt
+   dabei kurz der sitweite Fokusring (siehe :focus-visible oben) auf. */
+.team-cutout:focus-visible {
+  outline: none;
+}
+
+.team-cutout:hover,
+.team-cutout.is-active {
+  /* Gleichmäßige Skalierung auf x und y (kein scaleY) — das Foto wächst
+     proportional, keine Verzerrung. Wächst vom unteren Rand aus (siehe
+     transform-origin); die schmalere Ausgangsbreite (siehe oben) verhindert
+     seitliches Herausragen über die Kartenkante. Bewusst kein :focus-visible
+     hier — sonst bleibt die Karte nach dem Schließen des Modals vergrößert,
+     weil der Fokus per JS zurück auf den Trigger springt. Stattdessen hält
+     assets/js/team-modal.js die Klasse .is-active, solange das Modal offen
+     ist — dadurch bleibt der Zoom aktiv, auch wenn die Maus beim Öffnen auf
+     das Modal statt auf die Kachel darunter trifft, und verschwindet exakt
+     beim Schließen. */
+  transform: scale(1.18);
+}
+
+.team-cutout img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* contain statt cover: Foto wird nie zugeschnitten, immer vollständig
+     sichtbar. Da .team-cutout exakt im Bildseitenverhältnis ist, füllt das
+     Foto die Box ohnehin randlos aus — contain greift nur als Sicherheit,
+     falls ein Foto minimal vom 900×752-Verhältnis abweicht. */
+  object-fit: contain;
+}
+
+/* ---- Team-Modal (Lightbox) ---- */
+.team-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.team-modal[hidden] { display: none; }
+
+.team-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(21, 20, 15, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.team-modal-card {
+  position: relative;
+  width: min(480px, 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--black);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  animation: team-modal-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes team-modal-in {
+  from { opacity: 0; transform: scale(0.93) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.team-modal-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  /* cover statt contain: füllt die Box immer komplett, unabhängig vom
+     Seitenverhältnis des jeweiligen Fotos — dadurch nie schwarze Ränder,
+     stattdessen wird bei Bedarf oben/unten (oder seitlich) minimal
+     beschnitten. */
+  object-fit: cover;
+  background: var(--black);
+}
+
+.team-modal-caption {
+  /* Unten im Bild statt oben links. Kein Hintergrund, kein Schatten, kein
+     sonstiger Effekt hinter dem Text — das Foto selbst sorgt für genug
+     Kontrast. (Ein backdrop-filter-Blur wurde kurz getestet und auf
+     Wunsch wieder entfernt.) */
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 82%;
+  padding: 22px 22px 24px;
+  color: var(--white);
+}
+
+.team-modal-caption h3 { font-size: 19px; margin-bottom: 2px; }
+.team-modal-caption .team-modal-role { font-size: 13px; color: rgba(255, 255, 255, 0.72); margin-bottom: 8px; }
+.team-modal-caption .team-modal-bio { font-size: 13px; color: rgba(255, 255, 255, 0.92); line-height: 1.4; }
+
+.team-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--white);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.team-modal-close:hover { background: rgba(255, 255, 255, 0.26); }
+
+/* ---- FAQ ---- */
+.faq-list { margin-top: 40px; }
+
+.faq-item {
+  border-top: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.faq-item:last-child { border-bottom: 1px solid var(--line); }
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+
+.faq-item summary::after {
+  content: "+";
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.faq-item[open] summary::after { transform: rotate(45deg); }
+
+.faq-item p {
+  margin-top: 14px;
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 640px;
+}
+
+/* ---- Kontakt-CTA ---- */
+.contact-cta {
+  text-align: center;
+}
+
+.contact-cta p {
+  color: var(--text-muted);
+  max-width: 480px;
+  margin: 16px auto 32px;
+}
+
+/* ---- Footer ---- */
+/* padding-bottom deutlich größer als früher (64px): darunter liegt jetzt
+   .footer-fade (position:fixed, siehe unten), die am unteren Bildschirmrand
+   klebt. Ohne diesen zusätzlichen Puffer würde am Ende der Seite (maximal
+   gescrollt) genau der Footer-Text ("Innsbruck, Austria" etc.) in der
+   Blur-Zone landen statt frei darüber zu stehen. */
+.footer { padding-top: 96px; padding-bottom: 260px; }
+
+.footer-big {
+  font-size: clamp(30px, 4.8vw, 52px);
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  margin-bottom: 56px;
+}
+
+.footer-big .muted { color: var(--text-muted); font-weight: 500; }
+
+@media (max-width: 560px) {
+  .footer-big { white-space: normal; }
+}
+
+/* Rotierendes Wort im Footer-Satz: drei Wörter liegen übereinander in einer
+   fest breiten Box (Breite an "visualized" angelehnt, damit der Text danach
+   nicht bei jedem Wechsel springt) und blenden per CSS-Animation nacheinander
+   ein/aus, inklusive kurzem Motion-Blur während der Bewegung — kein
+   JavaScript nötig, rein CSS-Keyframes. Im sichtbaren Zustand nur 60%
+   Deckkraft statt 100% — hebt das Wort dezent vom übrigen, voll schwarzen
+   Text ab, statt gleich stark zu wirken.
+   Statt eines harten overflow:hidden-Schnitts (dort wäre am Rand der Box eine
+   sichtbare Kante, an der das Wort abrupt verschwindet) blendet eine schmale
+   mask-image-Verlaufsmaske nur die äußersten Ränder der Box weich aus — das
+   Wort selbst bleibt komplett sichtbar, nur der Übergang wirkt weich statt
+   hart gekappt. */
+.word-swipe {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 5.3em;
+  height: 1.3em;
+  overflow: hidden;
+  vertical-align: bottom;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+.word-swipe-item {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  opacity: 0;
+  transform: translateY(calc(-50% + 14px));
+  filter: blur(6px);
+  animation: word-swipe-cycle 6s infinite;
+}
+
+.word-swipe-item:nth-child(2) { animation-delay: 2s; }
+.word-swipe-item:nth-child(3) { animation-delay: 4s; }
+
+@keyframes word-swipe-cycle {
+  0%   { opacity: 0;   transform: translateY(calc(-50% + 14px)); filter: blur(6px); }
+  4%   { opacity: 0.6; transform: translateY(-50%);              filter: blur(0); }
+  29%  { opacity: 0.6; transform: translateY(-50%);              filter: blur(0); }
+  33%  { opacity: 0;   transform: translateY(calc(-50% - 14px)); filter: blur(6px); }
+  100% { opacity: 0;   transform: translateY(calc(-50% - 14px)); filter: blur(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-swipe-item {
+    animation: none;
+    position: static;
+    opacity: 0.6;
+    transform: none;
+    filter: none;
+  }
+  .word-swipe-item + .word-swipe-item { display: none; }
+  .word-swipe { width: auto; height: auto; overflow: visible; mask-image: none; -webkit-mask-image: none; }
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.footer-col .eyebrow { margin-bottom: 12px; display: block; }
+.footer-col p, .footer-col a { display: block; font-size: 15px; margin-bottom: 6px; }
+.footer-col a:hover { color: var(--pink); }
+
+/* Social-Icons statt Textlinks: runde Buttons nebeneinander statt
+   gestapelter Zeilen — überschreibt display/margin von ".footer-col a"
+   gezielt für diese beiden Links. */
+.social-icons { display: flex; gap: 12px; }
+
+.footer-col .social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+
+.social-icon svg { width: 18px; height: 18px; }
+
+.footer-bottom {
+  margin-top: 64px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.footer-legal { display: flex; gap: 16px; }
+.footer-legal a:hover { color: var(--pink); }
+
+/* ---- Rechtstexte (Impressum/Datenschutz) ---- */
+.legal { max-width: 720px; margin-top: 8px; }
+
+.legal h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 40px;
+  margin-bottom: 12px;
+}
+
+.legal h2:first-child { margin-top: 0; }
+
+.legal p {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.legal ul {
+  list-style: disc;
+  margin: 0 0 12px 20px;
+}
+
+.legal li {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 6px;
+}
+
+.legal a { color: var(--pink); text-decoration: underline; }
+.legal a:hover { opacity: 0.8; }
+
+.legal-todo { color: var(--pink); font-weight: 600; }
+
+/* ---- Projekt-Detailseite ---- */
+.project-hero {
+  padding-top: 48px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.project-title {
+  margin-top: 20px;
+  font-size: clamp(36px, 5vw, 56px);
+}
+
+/* Client/Jahr nebeneinander, darunter Beschreibung und Scope-of-Work-Tags —
+   siehe .project-fact/.project-scope/.scope-tag unten. */
+.project-facts {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.project-fact .eyebrow {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.project-fact .value {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.project-description {
+  margin-top: 24px;
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 560px;
+}
+
+.project-scope {
+  margin-top: 28px;
+}
+
+.scope-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scope-tag {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--white);
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Bewusst kleiner als die volle Container-Breite: das Bild ist auf der
+   Übersichtsseite schon als Karte zu sehen — beim Öffnen des Projekts muss
+   es nicht nochmal riesig wiederholt werden. */
+.project-cover {
+  margin-top: 40px;
+  max-width: 640px;
+  margin-left: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(20, 19, 15, 0.1);
+}
+
+.project-cover img { width: 100%; display: block; }
+
+.media-heading {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 16px;
+}
+
+/* Kompakte Variante für Projekte mit nur 1-2 Videos, direkt unter dem
+   Beschreibungstext statt in einer eigenen Sektion weiter unten. */
+.video-grid--inline {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 920px;
+  margin-top: 12px;
+}
+
+/* Gestapelte Variante: Videos einzeln, untereinander statt im 3er-Raster
+   (z. B. Querformat-Videos wie bei projektseiten/agrar-tirol.html, oder eine
+   feste Hoch-/Querformat-Reihenfolge wie bei projektseiten/lightweight.html).
+   Volle Spaltenbreite — passend zur Größe der Querformat-Kacheln auf
+   agrar-tirol.html. */
+.video-grid--stacked {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+  gap: 32px;
+}
+
+/* Einzelne Hochformat-Kachel innerhalb einer gestapelten Reihe auf die
+   site-weite Shorts-Breite begrenzen (450px, wie .video-grid--inline),
+   statt sie auf die volle Spaltenbreite von .video-grid--stacked zu
+   strecken. Linksbündig statt zentriert (siehe projektseiten/lightweight.html:
+   Querformat-Video oben volle Breite, Short darunter schmal, linksbündig). */
+.media-placeholder--short {
+  max-width: 450px;
+  margin: 0;
+}
+
+/* 2x2-Raster statt 3er-Reihe — für eine gerade Videoanzahl (z. B. 4, siehe
+   projektseiten/autopark.html), bei der 3 Spalten eine unschöne Restzeile
+   mit nur einer Kachel erzeugen würden. */
+.media-heading--inline {
+  margin-top: 24px;
+}
+
+.media-placeholder {
+  aspect-ratio: 9/16;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--white);
+}
+
+/* Für Videos, die im Querformat vorliegen (z. B. reguläre YouTube-Videos
+   statt Shorts) statt dem Standard-Hochformat. Rahmen-Seitenverhältnis muss
+   zum tatsächlichen Video passen — sonst legt YouTube/Vimeo selbst schwarze
+   Balken ein, um es nicht zu verzerren. */
+.media-placeholder--landscape {
+  aspect-ratio: 16/9;
+}
+
+.media-placeholder .play-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Kachel mit echtem Video (siehe assets/js/video-embed.js): vor dem Klick
+   normaler Platzhalter mit Zeigefinger-Cursor; nach dem Klick füllt das
+   iframe die Kachel komplett aus, Rahmen/Hintergrund verschwinden. */
+.media-placeholder[data-vimeo-id],
+.media-placeholder[data-youtube-id] { cursor: pointer; }
+
+.media-placeholder.is-loaded {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: default;
+}
+
+/* Vorschaubild liegt als Foto in der Kachel, Play-Button schwebt zentriert
+   darüber — statt eines leeren Rahmens mit Icon (siehe .media-thumb). */
+.media-placeholder--video {
+  position: relative;
+  border: none;
+  background: none;
+  overflow: hidden;
+}
+
+.media-placeholder--video .media-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-placeholder--video .play-icon {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.video-embed {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.image-grid .media-placeholder { aspect-ratio: 4/3; }
+
+/* ---- Responsive ---- */
+@media (max-width: 860px) {
+  section { padding: 72px 0; }
+
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-visual { height: 320px; margin-top: 24px; }
+
+  .nav-links { display: none; }
+
+  /* Logo und zentrierte Pille würden sich auf schmalen Screens überlappen
+     (die Pille beansprucht die volle Breite mittig). Die Pille trägt mit
+     ihrem BVS-Reiter ohnehin schon die Markenidentität, daher reicht auf
+     Mobile das Logo allein in der Pille — das zusätzliche Logo links fällt
+     weg, um Kollisionen zu vermeiden. */
+  .logo-mark { display: none; }
+
+  .projects-grid,
+  .video-grid,
+  .image-grid { grid-template-columns: 1fr 1fr; }
+
+  .services-grid { grid-template-columns: 1fr; gap: 32px; }
+
+  .team-grid { grid-template-columns: 1fr; }
+
+  .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+}
+
+@media (max-width: 560px) {
+  .container { padding-left: 20px; padding-right: 20px; }
+  .projects-grid,
+  .video-grid,
+  .image-grid { grid-template-columns: 1fr; }
+  .trusted { flex-direction: column; align-items: flex-start; }
+  .trusted-marquee { width: 100%; }
+}
+
+/* Scroll-Effekt der Projekt-Karten: auf kleinen Screens und bei reduzierter
+   Bewegungspräferenz deaktiviert (assets/js/scroll-effects.js läuft dort gar nicht
+   erst) — Karten stehen dank --p:1-Standard direkt an ihrer finalen Position. */
+@media (max-width: 860px), (prefers-reduced-motion: reduce) {
+  .projects-grid .project-card { --p: 1; }
+}
