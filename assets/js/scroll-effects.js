@@ -69,6 +69,17 @@
   // (20% einer Viewport-Höhe) davor — "kurz bevor" statt "genau wenn".
   var EXIT_BUFFER_RATIO = 0.2;
 
+  // Auf Mobile folgt die "Trusted by"-Sektion direkt auf den Hero. Das
+  // fliegende Bild (position:fixed, hoher z-index, siehe updateCards) muss
+  // dort schon angedockt sein, BEVOR die Hero-Unterkante (= Oberkante von
+  // "Trusted by") überhaupt am unteren Bildschirmrand auftaucht — sonst
+  // liegt es beim Scrollen noch über den Trusted-Logos und verdeckt sie.
+  // Ein ganzer Viewport (statt nur 20%) als Puffer garantiert das: bei
+  // scrollY = heroBottomAbs - vh ist die Hero-Unterkante gerade erst am
+  // unteren Bildschirmrand angekommen, +5% zusätzlich als Sicherheitsabstand.
+  var MOBILE_BREAKPOINT = 860;
+  var MOBILE_EXIT_BUFFER_RATIO = 1.05;
+
   // Absolute Seiten-Position (px von ganz oben), an der die Unterkante des
   // Hero-Bereichs den oberen Bildschirmrand erreicht — also der Punkt, an
   // dem der Hero (und mit ihm der Fächer) komplett aus dem Bild gescrollt
@@ -94,7 +105,9 @@
     ticking = false;
 
     var vh = window.innerHeight;
-    var dockDistance = Math.max(heroBottomAbs - vh * EXIT_BUFFER_RATIO, 200);
+    var isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+    var exitBufferRatio = isMobile ? MOBILE_EXIT_BUFFER_RATIO : EXIT_BUFFER_RATIO;
+    var dockDistance = Math.max(heroBottomAbs - vh * exitBufferRatio, 200);
 
     // Fortschritt 0 → 1 rein anhand der Scroll-Position: bei scrollY = 0
     // (oberster Punkt der Seite) immer 0, nach "dockDistance" Pixeln

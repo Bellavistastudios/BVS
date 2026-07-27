@@ -555,17 +555,27 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--white);
-  border: 1px solid var(--line);
+  background: transparent;
+  /* Gleicher Akzent-Rahmen wie .nav-cta/.nav-brand-mark, damit der Button auf
+     Mobile farblich zu den übrigen Pillen-Buttons passt statt neutral grau/
+     schwarz zu wirken. */
+  border: 1.5px solid var(--accent);
   border-radius: 50%;
   cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-mobile-toggle:hover {
+  transform: scale(1.06);
+  background: rgba(205, 170, 254, 0.16);
+  box-shadow: 0 0 14px rgba(205, 170, 254, 0.7);
 }
 
 .nav-mobile-toggle span {
   display: block;
   width: 16px;
   height: 1.5px;
-  background: var(--black);
+  background: var(--accent);
   transition: transform 0.25s ease, opacity 0.2s ease;
 }
 
@@ -1959,14 +1969,19 @@ button.btn {
 
   .nav-links { display: none; }
 
-  /* Logo und zentrierte Pille würden sich auf schmalen Screens überlappen
-     (die Pille beansprucht die volle Breite mittig). Die Pille trägt mit
-     ihrem BVS-Reiter ohnehin schon die Markenidentität, daher reicht auf
-     Mobile das Logo allein in der Pille — das zusätzliche Logo links fällt
-     weg, um Kollisionen zu vermeiden. */
+  /* Logo würde sich mit dem Hamburger-Button rechts überlappen bzw. wirkt auf
+     schmalen Screens neben der Navigation überflüssig — der Hamburger allein
+     trägt auf Mobile die komplette Navigation. */
   .logo-mark { display: none; }
 
-  /* Ersatz für die versteckten .nav-links: Hamburger-Button rechts, öffnet
+  /* Ganze Pille (B-Monogramm + Work/Services/Team + Contact) weicht auf
+     Mobile komplett dem Hamburger-Button: zwei nebeneinander sichtbare
+     Buttons (Pille UND Hamburger) wirkten redundant, der Hamburger allein
+     öffnet ohnehin dieselben Links inklusive Contact (siehe
+     .nav-mobile-panel). */
+  .nav-pill { display: none; }
+
+  /* Ersatz für die versteckte .nav-pill: Hamburger-Button rechts, öffnet
      .nav-mobile-panel (siehe dort). */
   .nav-mobile-toggle { display: flex; }
 
@@ -1979,6 +1994,22 @@ button.btn {
   .team-grid { grid-template-columns: 1fr; }
 
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+
+  /* Der Blur-Verlauf (.header-fade/.footer-fade, siehe dort) ist für den
+     130px-Verlauf auf breiten Desktop-Viewports abgestimmt. Auf kleinen,
+     schmalen Mobile-Screens macht dieselbe Höhe einen deutlich größeren
+     Anteil des sichtbaren Bilds aus und wirkt dort nur wie ein störender
+     Schleier über Kopf-/Fußbereich statt einem dezenten Verlauf — daher auf
+     Mobile ganz weg, statt die Werte nur zu verkleinern. */
+  .header-fade,
+  .footer-fade { display: none; }
+
+  /* .toolbox-orbit-wrap trägt zusätzlich zu "margin: auto" ein festes
+     "left: 28px" (siehe dort), fein abgestimmt auf die zweispaltige
+     Desktop-Anordnung von .services-grid. Im einspaltigen Mobile-Layout
+     schiebt genau dieser Wert den Kreis sichtbar aus der Mitte — hier
+     zurückgesetzt, damit "margin: auto" ihn tatsächlich zentriert. */
+  .toolbox-orbit-wrap { left: 0; }
 
   /* Ab hier (≤860px) whitespace:normal statt nowrap: der Satz ist bei
      white-space:nowrap sonst in der ganzen Lücke zwischen 560 und 860px
