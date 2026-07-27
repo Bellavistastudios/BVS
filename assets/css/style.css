@@ -601,32 +601,44 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   align-items: center;
   justify-content: center;
   gap: 32px;
-  background: rgba(21, 20, 15, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Helles, blickdurchlässiges Overlay statt solidem Schwarz — die Seite
+     dahinter bleibt (verschwommen) sichtbar statt komplett abgedeckt zu
+     werden, passend zum sonst hellen Look der Seite. */
+  background: rgba(250, 249, 246, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .nav-mobile-panel[hidden] { display: none; }
 
+/* BVS-Reiter oben im Menü — bewusst kleiner/dezenter als die eigentlichen
+   Navigationslinks, reine Marken-Kennung statt gleichwertigem Menüpunkt. */
+.nav-mobile-brand {
+  position: absolute;
+  top: 28px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Alle Navigationsziele (Work/Services/Team/Contact) einheitlich als reiner
+   Text in Akzent-Pink, ohne Button-Rahmen/-Hintergrund. */
 .nav-mobile-panel a {
   font-size: 24px;
   font-weight: 700;
-  color: var(--white);
+  color: var(--accent);
 }
 
-.nav-mobile-panel a:hover { color: var(--accent); }
+.nav-mobile-panel a:hover { color: var(--black); }
 
-/* Höhere Spezifität nötig (Klasse+Element ".nav-mobile-panel a" oben wiegt
-   sonst schwerer als die einzelne Klasse ".nav-mobile-cta" und würde Farbe/
-   Schriftgröße hier überschreiben, unabhängig von der Reihenfolge im
-   Stylesheet). */
+/* Contact steht wie die übrigen Links als reiner Text da (keine Pille/
+   kein Rahmen mehr) — nur der Abstand nach oben markiert ihn optisch als
+   letzten, eigenen Punkt ganz unten im Menü. */
 .nav-mobile-panel .nav-mobile-cta {
   margin-top: 8px;
-  border: 1.5px solid var(--accent);
-  color: var(--accent);
-  padding: 12px 28px;
-  border-radius: var(--radius-full);
-  font-size: 16px;
+  font-size: 24px;
 }
 
 .nav-mobile-close {
@@ -635,19 +647,22 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   right: 24px;
   width: 40px;
   height: 40px;
-  border: none;
+  border: 1.5px solid var(--accent);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--white);
+  background: transparent;
+  color: var(--accent);
   font-size: 15px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.nav-mobile-close:hover { background: rgba(255, 255, 255, 0.26); }
+.nav-mobile-close:hover {
+  background: rgba(205, 170, 254, 0.16);
+  transform: scale(1.06);
+}
 
 /* ---- Hero ---- */
 .hero {
@@ -2010,6 +2025,20 @@ button.btn {
      schiebt genau dieser Wert den Kreis sichtbar aus der Mitte — hier
      zurückgesetzt, damit "margin: auto" ihn tatsächlich zentriert. */
   .toolbox-orbit-wrap { left: 0; }
+
+  /* Trusted-by auf Mobile: schmalere, kompaktere Leiste (weniger vertikales
+     Padding) mit kleineren Logos und engerem Abstand, damit immer 3-4 Marken
+     gleichzeitig im Bild stehen statt nur 1-2 übergroßer Logos. Kürzere
+     Animationsdauer lässt sie spürbar schneller durchlaufen. */
+  .trusted { padding-top: 20px; padding-bottom: 20px; gap: 16px; }
+  .trusted-track { gap: 24px; animation-duration: 12s; }
+  .trusted-logo { height: 21px; max-width: 100px; }
+  .trusted-logo--bergisel { height: 47px; max-width: 124px; }
+  .trusted-logo--corthea { height: 16px; }
+  .trusted-logo--agrar-tirol { height: 16px; }
+  .trusted-logo--autopark { height: 26px; }
+  .trusted-logo--polestar { height: 86px; max-width: 160px; }
+  .trusted-logo--dust { height: 27px; }
 
   /* Ab hier (≤860px) whitespace:normal statt nowrap: der Satz ist bei
      white-space:nowrap sonst in der ganzen Lücke zwischen 560 und 860px

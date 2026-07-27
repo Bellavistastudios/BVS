@@ -69,16 +69,25 @@
   // (20% einer Viewport-Höhe) davor — "kurz bevor" statt "genau wenn".
   var EXIT_BUFFER_RATIO = 0.2;
 
-  // Auf Mobile folgt die "Trusted by"-Sektion direkt auf den Hero. Das
-  // fliegende Bild (position:fixed, hoher z-index, siehe updateCards) muss
-  // dort schon angedockt sein, BEVOR die Hero-Unterkante (= Oberkante von
-  // "Trusted by") überhaupt am unteren Bildschirmrand auftaucht — sonst
-  // liegt es beim Scrollen noch über den Trusted-Logos und verdeckt sie.
-  // Ein ganzer Viewport (statt nur 20%) als Puffer garantiert das: bei
-  // scrollY = heroBottomAbs - vh ist die Hero-Unterkante gerade erst am
-  // unteren Bildschirmrand angekommen, +5% zusätzlich als Sicherheitsabstand.
+  // Auf Mobile läuft die Bewegung über einen eigenen, kurzen Abschnitt statt
+  // über die gesamte Scrollstrecke durch den Hero: die Karten stehen im
+  // Fächer erst mal still (progress bleibt 0, keine sichtbare Bewegung),
+  // und beginnen erst kurz bevor der Hero-Fächer aus dem Bild gescrollt
+  // würde. Zwei Gründe: (1) Bei der alten Regel (progress ab scrollY=0)
+  // lief die Animation faktisch unbemerkt im Hintergrund ab, während der
+  // Hero-Text noch gelesen wurde. (2) Sie muss trotzdem fertig ("is-docked")
+  // sein, BEVOR die "Trusted by"-Sektion (folgt direkt auf den Hero) am
+  // unteren Bildschirmrand auftaucht, sonst liegt das fliegende Bild
+  // (position:fixed, hoher z-index, siehe updateCards) über den Logos.
+  // MOBILE_END_BUFFER_RATIO markiert den Andock-Punkt (bei
+  // scrollY = heroBottomAbs - vh*1.05, also knapp bevor die Hero-Unterkante
+  // den unteren Bildschirmrand erreicht). MOBILE_START_WINDOW_RATIO
+  // bestimmt, wie viele Viewport-Höhen VOR diesem Andock-Punkt die Bewegung
+  // einsetzt — 0.6 heißt: erst in den letzten 60% eines Bildschirms
+  // Scrollstrecke vor dem Andocken passiert überhaupt etwas.
   var MOBILE_BREAKPOINT = 860;
-  var MOBILE_EXIT_BUFFER_RATIO = 1.05;
+  var MOBILE_END_BUFFER_RATIO = 1.05;
+  var MOBILE_START_WINDOW_RATIO = 0.6;
 
   // Absolute Seiten-Position (px von ganz oben), an der die Unterkante des
   // Hero-Bereichs den oberen Bildschirmrand erreicht — also der Punkt, an
@@ -106,13 +115,22 @@
 
     var vh = window.innerHeight;
     var isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-    var exitBufferRatio = isMobile ? MOBILE_EXIT_BUFFER_RATIO : EXIT_BUFFER_RATIO;
-    var dockDistance = Math.max(heroBottomAbs - vh * exitBufferRatio, 200);
+    var progress;
 
-    // Fortschritt 0 → 1 rein anhand der Scroll-Position: bei scrollY = 0
-    // (oberster Punkt der Seite) immer 0, nach "dockDistance" Pixeln
-    // Scrollen vollständig angedockt (siehe heroBottomAbs oben).
-    var progress = window.scrollY / dockDistance;
+    if (isMobile) {
+      // Andock-Punkt und kurzes Bewegungsfenster davor (siehe Kommentar zu
+      // den MOBILE_*-Konstanten oben) statt Fortschritt ab scrollY = 0.
+      var dockPoint = Math.max(heroBottomAbs - vh * MOBILE_END_BUFFER_RATIO, 200);
+      var startPoint = Math.max(dockPoint - vh * MOBILE_START_WINDOW_RATIO, 0);
+      progress = (window.scrollY - startPoint) / Math.max(dockPoint - startPoint, 1);
+    } else {
+      // Fortschritt 0 → 1 rein anhand der Scroll-Position: bei scrollY = 0
+      // (oberster Punkt der Seite) immer 0, nach "dockDistance" Pixeln
+      // Scrollen vollständig angedockt (siehe heroBottomAbs oben).
+      var dockDistance = Math.max(heroBottomAbs - vh * EXIT_BUFFER_RATIO, 200);
+      progress = window.scrollY / dockDistance;
+    }
+
     progress = Math.min(1, Math.max(0, progress));
 
     grid.classList.toggle("is-docked", progress >= 1);
