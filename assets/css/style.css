@@ -587,69 +587,49 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 .nav-mobile-toggle.is-open span:nth-child(2) { opacity: 0; }
 .nav-mobile-toggle.is-open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
 
-/* Vollbild-Overlay statt Dropdown: bei nur 3 Links + Contact lohnt sich kein
-   schmales Aufklapp-Menü unter der Pille, ein ruhiger, zentrierter
-   Vollbildschirm mit großen Tap-Zielen passt besser zum sonst reduzierten,
-   ruhigen Look der Seite. Gleiches hidden-Muster wie #team-modal (siehe
-   dort) statt einer eigenen Sichtbarkeits-Logik. */
+/* Ganzflächiger, ruhiger Screen statt Karte/Blur (Konzept B): löst den Hero
+   komplett ab, kein Overlay-Gefühl, keine Verschwommenheit — passt zum
+   sonst reduzierten, unaufgeregten Look der Seite. Gleiches hidden-Muster
+   wie #team-modal (siehe dort) statt einer eigenen Sichtbarkeits-Logik. */
 .nav-mobile-panel {
   position: fixed;
   inset: 0;
   z-index: 300;
   display: flex;
   align-items: center;
-  justify-content: center;
-  /* Kein Hintergrund/Blur mehr auf voller Bildschirmfläche — das übernimmt
-     jetzt ausschließlich .nav-mobile-card (siehe dort), der Rest der Seite
-     bleibt komplett scharf sichtbar. */
-  background: transparent;
+  background: var(--bg);
 }
 
 .nav-mobile-panel[hidden] { display: none; }
 
-/* Abgerundete Karte um alle Navigationsziele herum, statt den ganzen
-   Bildschirm zu verschwimmen — deutlich schwächerer Blur (6px statt 24px)
-   und nur dort, wo tatsächlich Text steht. */
+/* Alle 5 Punkte (BVS + Work/Services/Team/Contact) linksbündig
+   untereinander, exakt gleiche Typografie — keine Sonderrolle mehr für BVS
+   oder Contact. Der linke Abstand entspricht .logo-mark (32px), damit die
+   Spalte optisch mit dem Rest des Seitenrasters fluchtet. */
 .nav-mobile-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 32px;
-  padding: 48px 64px;
-  border-radius: var(--radius-lg);
-  background: rgba(250, 249, 246, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(205, 170, 254, 0.3);
-  box-shadow: 0 20px 50px rgba(20, 19, 15, 0.1);
+  align-items: flex-start;
+  gap: 28px;
+  padding-left: 32px;
 }
 
-/* BVS-Reiter jetzt regulärer erster Punkt im selben Flex-Stapel wie die
-   übrigen Links (gleicher "gap" wie Work/Services/Team/Contact) — nur die
-   Typografie bleibt dezenter, als reine Marken-Kennung statt gleichwertigem
-   Menüpunkt. */
-.nav-mobile-brand {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-/* Alle Navigationsziele (Work/Services/Team/Contact) einheitlich als reiner
-   Text in Akzent-Pink, ohne Button-Rahmen/-Hintergrund. */
+/* BVS ist im Markup ebenfalls ein <a> (siehe index.html) — eine einzige
+   Regel für alle 5 Wörter statt getrennter Klassen-Sonderfälle. Schwarz in
+   Ruhe, erst beim tatsächlichen Antippen (:active) wechselt GENAU das
+   berührte Wort auf Akzent-Pink — kein Hover-Umfärben mehr, das auf einem
+   Touchscreen ohnehin nie greift. -webkit-tap-highlight-color entfernt
+   Safaris grauen Standard-Tap-Schleier, der sonst über die eigene
+   :active-Färbung gelegt würde. */
 .nav-mobile-card a {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--black);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.nav-mobile-card a:hover { color: var(--black); }
-
-/* Contact steht wie die übrigen Links als reiner Text da (keine Pille/kein
-   Rahmen mehr), einfach der letzte Punkt im selben Stapel. */
-.nav-mobile-card .nav-mobile-cta {
-  font-size: 22px;
+.nav-mobile-card a:active {
+  color: var(--accent);
 }
 
 .nav-mobile-close {

@@ -43,6 +43,12 @@
     if (e.key === "Escape" && !panel.hidden) close();
   });
 
+  // iOS Safari wendet :active (siehe .nav-mobile-card a:active in style.css)
+  // auf Touch-Geräten nur an, wenn irgendwo im Dokument ein touchstart-
+  // Listener hängt — ohne diesen Leerlauf-Listener bliebe der Pink-Tap-
+  // Effekt auf den Menü-Wörtern auf dem iPhone komplett aus.
+  document.addEventListener("touchstart", function () {}, { passive: true });
+
   // Fenster wird über den Mobile-Breakpoint hinaus vergrößert (z.B. Tablet-
   // Rotation ins Querformat oder Fenster am Desktop breiter gezogen) —
   // Menü hat dort keinen sichtbaren Hamburger mehr, der es schließen könnte,
