@@ -36,7 +36,7 @@
   Object.keys(SOURCES).forEach(function (key) {
     var source = SOURCES[key];
     document.querySelectorAll(".media-placeholder[" + source.attr + "]").forEach(function (tile) {
-      tile.addEventListener("click", function loadVideo() {
+      function loadVideo() {
         var id = tile.getAttribute(source.attr);
         var iframe = document.createElement("iframe");
         iframe.className = "video-embed";
@@ -47,8 +47,29 @@
 
         tile.replaceChildren(iframe);
         tile.classList.add("is-loaded");
+        // Kachel ist jetzt nur noch der Player-Rahmen, kein Button mehr —
+        // tabindex/role/aria-label (siehe HTML) wieder entfernen, der iframe
+        // selbst ist per Tastatur fokussierbar.
+        tile.removeAttribute("tabindex");
+        tile.removeAttribute("role");
+        tile.removeAttribute("aria-label");
         tile.removeEventListener("click", loadVideo);
-      });
+        tile.removeEventListener("keydown", onKeydown);
+      }
+
+      // Play-Kachel ist ein <div> mit tabindex="0"/role="button" (siehe HTML),
+      // damit sie überhaupt per Tab erreichbar ist — ein <div> feuert aber
+      // anders als ein <button> kein "click" bei Enter/Leertaste, das muss
+      // hier von Hand nachgebildet werden.
+      function onKeydown(event) {
+        if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+          event.preventDefault();
+          loadVideo();
+        }
+      }
+
+      tile.addEventListener("click", loadVideo);
+      tile.addEventListener("keydown", onKeydown);
     });
   });
 })();

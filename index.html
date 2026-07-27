@@ -5,7 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bella Vista Studios | Creative Agency from Innsbruck</title>
 <meta name="description" content="Bella Vista Studios (BVS) is a creative agency from Innsbruck working on photo, video, and design projects.">
-<link rel="stylesheet" href="assets/css/style.css?v=51">
+<link rel="canonical" href="https://bellavista-studios.com/">
+
+<!-- Open Graph / Twitter: gleicher Titel/Text wie oben, nur im Format, das
+     Link-Vorschauen (Social Media, Messenger, Suchmaschinen-Snippets) lesen. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bella Vista Studios">
+<meta property="og:title" content="Bella Vista Studios | Creative Agency from Innsbruck">
+<meta property="og:description" content="Bella Vista Studios (BVS) is a creative agency from Innsbruck working on photo, video, and design projects.">
+<meta property="og:url" content="https://bellavista-studios.com/">
+<meta property="og:image" content="https://bellavista-studios.com/assets/img/logo.png">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Bella Vista Studios | Creative Agency from Innsbruck">
+<meta name="twitter:description" content="Bella Vista Studios (BVS) is a creative agency from Innsbruck working on photo, video, and design projects.">
+<meta name="twitter:image" content="https://bellavista-studios.com/assets/img/logo.png">
+
+<link rel="stylesheet" href="assets/css/style.css?v=56">
 
 <!-- Strukturierte Daten (schema.org/JSON-LD) für Suchmaschinen. ProfessionalService
      statt generischem "Organization", weil wir über die echte Adresse auch für die
@@ -42,6 +58,58 @@
   ]
 }
 </script>
+
+<!-- FAQPage-Schema: exakt dieselben Fragen/Antworten wie in der FAQ-Sektion
+     unten im Body (siehe #faq) — Google verlangt, dass strukturierte Daten
+     mit dem sichtbaren Seiteninhalt übereinstimmen. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does the collaboration work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "After an initial conversation, we shape the concept together in a joint session, then take care of filming, editing, and delivery ourselves, so you always know what to expect at every step."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much effort does this take on your end?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Very little. Depending on the project, you might join a short kickoff session to align on the idea, but filming, editing, and publishing are entirely on us. No in-house camera or editing skills required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you need a briefing from us, or do you develop the ideas yourselves?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Both. We start with your goals and brand, then develop the concept and script ourselves together with you in a short session, so the idea fits your business without you having to write a full creative brief."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can you also work with existing material, like old footage or photos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. We regularly draw on existing archives, footage from past shoots, and previous campaigns, re-cutting, re-grading, and refining them to match today's content standards instead of starting from scratch."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you also publish the content on our channels, or just deliver the files?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Both options work. For ongoing partnerships, we typically publish and manage the content directly on your channels as part of the retainer. If you'd rather handle publishing yourselves, we simply deliver the final files."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -71,7 +139,23 @@
       </div>
       <a class="nav-cta" href="index.html#kontakt">Contact</a>
     </nav>
+
+    <button class="nav-mobile-toggle" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="nav-mobile-panel">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </header>
+
+  <!-- Mobiles Menü: Vollbild-Overlay, wird per assets/js/nav-mobile.js ein-/ausgeblendet
+       (gleiches hidden-Muster wie #team-modal in index.html). -->
+  <div class="nav-mobile-panel" id="nav-mobile-panel" hidden>
+    <button class="nav-mobile-close" type="button" data-nav-mobile-close aria-label="Menü schließen">✕</button>
+    <a href="projekte.html">Work</a>
+    <a href="index.html#leistungen">Services</a>
+    <a href="index.html#team">Team</a>
+    <a class="nav-mobile-cta" href="index.html#kontakt">Contact</a>
+  </div>
 
   <!-- Hero -->
   <section class="hero container">
@@ -429,6 +513,28 @@
           </div>
         </div>
       </div>
+
+      <!-- "About us": eigenes Klick-Aufklapp-Element unterhalb der Team-Fotos,
+           nach demselben Prinzip wie die Services (Kopfzeile + Icon eingeklappt,
+           Text erst nach Klick/Hover sichtbar). Layout des .team-grid darüber
+           bleibt davon komplett unberührt. -->
+      <div class="about-item">
+        <button class="about-trigger" type="button" aria-expanded="false" aria-controls="about-desc">
+          <span class="about-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+            </svg>
+          </span>
+          <h3>About us</h3>
+        </button>
+        <div class="about-desc-wrap" id="about-desc">
+          <div class="about-desc">
+            <p>Bella Vista Studios is a creative media agency founded in Innsbruck, Austria, by Henry Halmburger, Leonard Bies, and Carlo Spadaro. We work across photography, video, design, and social media, handling everything from concept to final delivery ourselves.</p>
+            <p>What sets us apart is how we work together: Henry builds the relationships and brand positioning, Leonard structures the process and execution, and Carlo shapes the creative direction and final cut. That combination lets us take a project from first idea to published content without handing it off between different teams.</p>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -548,11 +654,13 @@
 </div>
 
 <script src="assets/js/header-scroll.js?v=1" defer></script>
-<script src="assets/js/logo-contrast.js?v=2" defer></script>
-<script src="assets/js/scroll-effects.js?v=7" defer></script>
+<script src="assets/js/nav-mobile.js?v=1" defer></script>
+<script src="assets/js/logo-contrast.js?v=3" defer></script>
+<script src="assets/js/scroll-effects.js?v=10" defer></script>
 <script src="assets/js/team-modal.js?v=1" defer></script>
 <script src="assets/js/services-accordion.js?v=1" defer></script>
-<script src="assets/js/toolbox-orbit.js?v=3" defer></script>
+<script src="assets/js/about-accordion.js?v=1" defer></script>
+<script src="assets/js/toolbox-orbit.js?v=4" defer></script>
 <script src="assets/js/projects-expand.js?v=4" defer></script>
 <script src="assets/js/scroll-reveal.js?v=2" defer></script>
 </body>

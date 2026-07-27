@@ -99,8 +99,40 @@
     angle = (angle + speed * smoothedDt) % 360;
 
     layout();
-    window.requestAnimationFrame(frame);
+    rafId = window.requestAnimationFrame(frame);
   }
 
-  window.requestAnimationFrame(frame);
+  // Läuft sonst dauerhaft weiter, auch lange nachdem der Nutzer (v.a. auf
+  // Mobile beim Scrollen durch den Rest der Seite) über den Kreis
+  // hinausgescrollt ist — unnötiger Akkuverbrauch für eine unsichtbare
+  // Animation. IntersectionObserver pausiert die rAF-Loop außerhalb des
+  // Viewports und setzt lastTime beim Wiedereintritt zurück, damit kein
+  // riesiger dt-Sprung (siehe Cap oben) die Rotation springen lässt.
+  var rafId = null;
+
+  function start() {
+    if (rafId !== null) return;
+    lastTime = null;
+    rafId = window.requestAnimationFrame(frame);
+  }
+
+  function stop() {
+    if (rafId === null) return;
+    window.cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  if ("IntersectionObserver" in window) {
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) start(); else stop();
+        });
+      },
+      { threshold: 0 }
+    );
+    observer.observe(wrap);
+  } else {
+    start();
+  }
 })();

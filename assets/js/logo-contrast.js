@@ -47,6 +47,13 @@
   }
 
   function updateLogoContrast() {
+    // Auf Mobile ist .logo-mark per CSS ausgeblendet (display:none, siehe
+    // @media max-width:860px in style.css) — das Canvas-Sampling unten lief
+    // bisher bei jedem Scroll trotzdem für alle Thumbnails durch, obwohl das
+    // Ergebnis nie sichtbar wird. offsetParent ist bei display:none immer
+    // null, ein billiger Check ohne eigenes getComputedStyle.
+    if (logoMark.offsetParent === null) return;
+
     var logoRect = logoMark.getBoundingClientRect();
     var images = document.querySelectorAll("img.media-thumb");
     var darkest = 255;

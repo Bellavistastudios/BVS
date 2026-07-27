@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Autopark | Bella Vista Studios</title>
 <meta name="description" content="Autopark project by Bella Vista Studios (BVS).">
-<link rel="stylesheet" href="../assets/css/style.css?v=51">
+<link rel="stylesheet" href="../assets/css/style.css?v=56">
 </head>
 <body>
 
@@ -35,7 +35,23 @@
       </div>
       <a class="nav-cta" href="../index.html#kontakt">Contact</a>
     </nav>
+
+    <button class="nav-mobile-toggle" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="nav-mobile-panel">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </header>
+
+  <!-- Mobiles Menü: Vollbild-Overlay, wird per assets/js/nav-mobile.js ein-/ausgeblendet
+       (gleiches hidden-Muster wie #team-modal in index.html). -->
+  <div class="nav-mobile-panel" id="nav-mobile-panel" hidden>
+    <button class="nav-mobile-close" type="button" data-nav-mobile-close aria-label="Menü schließen">✕</button>
+    <a href="../projekte.html">Work</a>
+    <a href="../index.html#leistungen">Services</a>
+    <a href="../index.html#team">Team</a>
+    <a class="nav-mobile-cta" href="../index.html#kontakt">Contact</a>
+  </div>
 
   <section class="project-hero container">
     <a class="back-link" href="../projekte.html">← All Projects</a>
@@ -68,19 +84,19 @@
     <section class="container">
       <p class="media-heading">Videos</p>
       <div class="video-grid video-grid--inline">
-        <div class="media-placeholder media-placeholder--video" data-youtube-id="Lzqd1MOhvZA">
+        <div class="media-placeholder media-placeholder--video" data-youtube-id="Lzqd1MOhvZA" tabindex="0" role="button" aria-label="Play video">
           <img class="media-thumb" src="../assets/img/projects/autopark-video-1.jpg" alt="">
           <span class="play-icon">▶</span>
         </div>
-        <div class="media-placeholder media-placeholder--video" data-youtube-id="5d9O4ANas4c">
+        <div class="media-placeholder media-placeholder--video" data-youtube-id="5d9O4ANas4c" tabindex="0" role="button" aria-label="Play video">
           <img class="media-thumb" src="../assets/img/projects/autopark-video-2.jpg" alt="">
           <span class="play-icon">▶</span>
         </div>
-        <div class="media-placeholder media-placeholder--video" data-youtube-id="gVYNg481oYw">
+        <div class="media-placeholder media-placeholder--video" data-youtube-id="gVYNg481oYw" tabindex="0" role="button" aria-label="Play video">
           <img class="media-thumb" src="../assets/img/projects/autopark-video-3.jpg" alt="">
           <span class="play-icon">▶</span>
         </div>
-        <div class="media-placeholder media-placeholder--video" data-youtube-id="CuPwBwt17GI">
+        <div class="media-placeholder media-placeholder--video" data-youtube-id="CuPwBwt17GI" tabindex="0" role="button" aria-label="Play video">
           <img class="media-thumb" src="../assets/img/projects/autopark-video-4.jpg" alt="">
           <span class="play-icon">▶</span>
         </div>
@@ -150,8 +166,9 @@
 </div>
 
 <script src="../assets/js/header-scroll.js?v=1" defer></script>
-<script src="../assets/js/logo-contrast.js?v=2" defer></script>
-<script src="../assets/js/video-embed.js?v=1" defer></script>
+<script src="../assets/js/nav-mobile.js?v=1" defer></script>
+<script src="../assets/js/logo-contrast.js?v=3" defer></script>
+<script src="../assets/js/video-embed.js?v=2" defer></script>
 <script src="../assets/js/scroll-reveal.js?v=2" defer></script>
 </body>
 </html>

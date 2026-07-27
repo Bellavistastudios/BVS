@@ -7,13 +7,15 @@
   --bg: #faf9f6;
   --line: #d6d6d6;
   --text: #1c1c1a;
-  --text-muted: #7a7871;
+  /* War #7a7871 (Kontrast zu --bg nur 4.2:1, unter dem WCAG-AA-Minimum von
+     4.5:1 für normalen Fließtext) — leicht abgedunkelt auf 4.77:1. */
+  --text-muted: #726f67;
   --black: #15140f;
   --white: #ffffff;
   /* Einzige Akzentfarbe der Seite: überall, wo etwas farblich markiert ist
-     (Buttons, Status-Punkt, Icon-Kreise, aktive/Hover-Zustände), wird dieses
-     Rosa verwendet — nie eine zweite Akzentfarbe daneben. */
-  --pink: #fa5a9e;
+     (Buttons, Status-Punkt, Icon-Kreise, aktive/Hover-Zustände), wird diese
+     Akzentfarbe verwendet — nie eine zweite Akzentfarbe daneben. */
+  --accent: #cdaafe;
   --radius-full: 999px;
   --radius-lg: 22px;
   --radius-md: 14px;
@@ -82,11 +84,11 @@ button { font: inherit; cursor: pointer; }
 
 /* Kein Browser-Standard-Fokusring (blau) irgendwo auf der Seite — bei
    Maus-Klick ohnehin unsichtbar, bei Tastatur-Navigation stattdessen ein
-   Ring in der Marken-Akzentfarbe (siehe --pink), konsistent mit allen
+   Ring in der Marken-Akzentfarbe (siehe --accent), konsistent mit allen
    anderen interaktiven Elementen. */
 :focus { outline: none; }
 :focus-visible {
-  outline: 2px solid var(--pink);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -199,33 +201,33 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 
 .btn:hover { opacity: 0.85; }
 
-/* Rosa wird ausschließlich als Umrandung eingesetzt, nie als volle
-   Füllfläche. Bei Hover: leichter Zoom (vergrößert Rahmen + Text in einem
-   Zug), dazu eine dezente rosa Untermalung der Fläche (deutlich blasser als
-   die Umrandung selbst) sowie ein Glow um den Rahmen. */
+/* Die Akzentfarbe wird ausschließlich als Umrandung eingesetzt, nie als
+   volle Füllfläche. Bei Hover: leichter Zoom (vergrößert Rahmen + Text in
+   einem Zug), dazu eine dezente farbige Untermalung der Fläche (deutlich
+   blasser als die Umrandung selbst) sowie ein Glow um den Rahmen. */
 .btn-primary {
   background: transparent;
-  color: var(--pink);
-  border: 1.5px solid var(--pink);
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 .btn-primary:hover {
   opacity: 1;
   transform: scale(1.06);
-  background: rgba(240, 196, 211, 0.16);
-  box-shadow: 0 0 16px rgba(240, 196, 211, 0.7);
+  background: rgba(205, 170, 254, 0.16);
+  box-shadow: 0 0 16px rgba(205, 170, 254, 0.7);
 }
 .btn-outline {
   background: transparent;
-  color: var(--pink);
-  border: 1.5px solid var(--pink);
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 .btn-outline:hover {
   opacity: 1;
   transform: scale(1.06);
-  background: rgba(240, 196, 211, 0.16);
-  box-shadow: 0 0 16px rgba(240, 196, 211, 0.7);
+  background: rgba(205, 170, 254, 0.16);
+  box-shadow: 0 0 16px rgba(205, 170, 254, 0.7);
 }
 
 /* ---- Header / Navigation ----
@@ -477,8 +479,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   height: 30px;
   border-radius: 50%;
   background: transparent;
-  border: 1.5px solid var(--pink);
-  color: var(--pink);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -490,8 +492,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 
 .nav-brand:hover .nav-brand-mark {
   transform: scale(1.12);
-  background: rgba(240, 196, 211, 0.16);
-  box-shadow: 0 0 12px rgba(240, 196, 211, 0.7);
+  background: rgba(205, 170, 254, 0.16);
+  box-shadow: 0 0 12px rgba(205, 170, 254, 0.7);
 }
 
 .nav-links {
@@ -506,7 +508,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   transition: max-width 0.3s ease, opacity 0.3s ease;
 }
 
-.nav-links a:hover { color: var(--pink); }
+.nav-links a:hover { color: var(--accent); }
 
 .nav-pill.is-compact:not(:hover) .nav-links {
   max-width: 0;
@@ -516,8 +518,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 
 .nav-cta {
   background: transparent;
-  color: var(--pink);
-  border: 1.5px solid var(--pink);
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
   padding: 8.5px 18.5px;
   border-radius: var(--radius-full);
   font-size: 14px;
@@ -527,13 +529,115 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 
 .nav-cta:hover {
   transform: scale(1.06);
-  background: rgba(240, 196, 211, 0.16);
-  box-shadow: 0 0 14px rgba(240, 196, 211, 0.7);
+  background: rgba(205, 170, 254, 0.16);
+  box-shadow: 0 0 14px rgba(205, 170, 254, 0.7);
 }
 
-/* Mobiles Menü ohne JavaScript (Checkbox-Trick) */
-.nav-toggle { display: none; }
-.nav-toggle-label { display: none; }
+/* ---- Mobiles Menü ----
+   Hamburger-Button + Vollbild-Overlay (siehe .nav-mobile-panel), Logik in
+   assets/js/nav-mobile.js. Button ist Geschwister von .logo-mark/.nav-pill
+   innerhalb von .site-header und wie das Logo per position:absolute
+   platziert — dieselbe rechte Kante wie .logo-mark links (32px, an
+   .container-Padding ausgerichtet), sonst nur ab 860px sichtbar. */
+.nav-mobile-toggle {
+  display: none;
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  /* flex-direction:column nicht vergessen: die 3 Striche unten sind eigene
+     <span>-Kinder und sollen übereinander (Hamburger-Icon) stehen, nicht
+     nebeneinander in der Flex-Standardrichtung "row" — ohne diese Zeile
+     verschmelzen sie optisch zu einer einzigen Linie. */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.nav-mobile-toggle span {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: var(--black);
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.nav-mobile-toggle span + span { margin-top: 4px; }
+
+/* Hamburger klappt beim Öffnen zu einem X zusammen — reiner CSS-Zustand,
+   die Klasse setzt assets/js/nav-mobile.js beim Toggle. */
+.nav-mobile-toggle.is-open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+.nav-mobile-toggle.is-open span:nth-child(2) { opacity: 0; }
+.nav-mobile-toggle.is-open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+
+/* Vollbild-Overlay statt Dropdown: bei nur 3 Links + Contact lohnt sich kein
+   schmales Aufklapp-Menü unter der Pille, ein ruhiger, zentrierter
+   Vollbildschirm mit großen Tap-Zielen passt besser zum sonst reduzierten,
+   ruhigen Look der Seite. Gleiches hidden-Muster wie #team-modal (siehe
+   dort) statt einer eigenen Sichtbarkeits-Logik. */
+.nav-mobile-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  background: rgba(21, 20, 15, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.nav-mobile-panel[hidden] { display: none; }
+
+.nav-mobile-panel a {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.nav-mobile-panel a:hover { color: var(--accent); }
+
+/* Höhere Spezifität nötig (Klasse+Element ".nav-mobile-panel a" oben wiegt
+   sonst schwerer als die einzelne Klasse ".nav-mobile-cta" und würde Farbe/
+   Schriftgröße hier überschreiben, unabhängig von der Reihenfolge im
+   Stylesheet). */
+.nav-mobile-panel .nav-mobile-cta {
+  margin-top: 8px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  padding: 12px 28px;
+  border-radius: var(--radius-full);
+  font-size: 16px;
+}
+
+.nav-mobile-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--white);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.nav-mobile-close:hover { background: rgba(255, 255, 255, 0.26); }
 
 /* ---- Hero ---- */
 .hero {
@@ -559,7 +663,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   background: var(--white);
 }
 
-/* Ausnahme vom sonstigen Rosa-Akzent: der Punkt zeigt einen echten
+/* Ausnahme vom sonstigen Akzent-Farbton: der Punkt zeigt einen echten
    Status ("verfügbar für neue Projekte") — dafür bleibt er grün und leuchtet
    dauerhaft, nicht nur bei Hover. */
 .badge-dot {
@@ -1062,8 +1166,8 @@ button.btn {
   height: 40px;
   border-radius: 50%;
   background: transparent;
-  border: 1.5px solid var(--pink);
-  color: var(--pink);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1074,7 +1178,7 @@ button.btn {
 
 .service-trigger:hover .service-icon,
 .service-item.is-open .service-icon {
-  box-shadow: 0 0 12px rgba(240, 196, 211, 0.7);
+  box-shadow: 0 0 12px rgba(205, 170, 254, 0.7);
 }
 
 /* Aufklapp-Technik: der Wrapper ist ein Grid mit genau einer Zeile, deren
@@ -1098,6 +1202,76 @@ button.btn {
 
 .service-item:hover .service-desc-wrap,
 .service-item.is-open .service-desc-wrap {
+  grid-template-rows: 1fr;
+}
+
+/* ---- About us (Klick-Aufklapp-Element unterhalb der Team-Fotos, exakt
+   dieselbe Grid-Rows-0fr→1fr-Technik wie bei .service-desc-wrap, siehe dort
+   für Details, hier bewusst als eigene Klassen statt .service-* wiederverwendet,
+   damit der Code auch für andere Entwickler auf den ersten Blick klar bleibt). ---- */
+.about-item { margin-top: 40px; }
+
+.about-trigger {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 4px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.about-trigger:hover,
+.about-trigger:focus-visible,
+.about-item.is-open .about-trigger {
+  background: var(--bg);
+}
+
+.about-trigger h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.about-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.about-trigger:hover .about-icon,
+.about-item.is-open .about-icon {
+  box-shadow: 0 0 12px rgba(205, 170, 254, 0.7);
+}
+
+.about-desc-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+
+.about-desc {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 4px 4px calc(40px + 16px);
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.about-desc p + p { margin-top: 12px; }
+
+.about-item:hover .about-desc-wrap,
+.about-item.is-open .about-desc-wrap {
   grid-template-rows: 1fr;
 }
 
@@ -1135,8 +1309,8 @@ button.btn {
   height: 56px;
   border-radius: 50%;
   background: transparent;
-  border: 1.5px solid var(--pink);
-  color: var(--pink);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1331,8 +1505,10 @@ button.btn {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 32px;
-  height: 32px;
+  /* 36px statt vorher 32px: etwas näher an einem brauchbaren Tap-Ziel,
+     ohne auf der kompakten Modal-Karte (max. 480px) unproportioniert zu wirken. */
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
@@ -1414,10 +1590,8 @@ button.btn {
 }
 
 .footer-big .muted { color: var(--text-muted); font-weight: 500; }
-
-@media (max-width: 560px) {
-  .footer-big { white-space: normal; }
-}
+/* white-space:normal ab 860px greift im Responsive-Block weiter unten
+   (deckt seitdem auch die vorher fehlende Lücke zwischen 560 und 860px ab). */
 
 /* Rotierendes Wort im Footer-Satz: drei Wörter liegen übereinander in einer
    fest breiten Box (Breite an "visualized" angelehnt, damit der Text danach
@@ -1485,7 +1659,7 @@ button.btn {
 
 .footer-col .eyebrow { margin-bottom: 12px; display: block; }
 .footer-col p, .footer-col a { display: block; font-size: 15px; margin-bottom: 6px; }
-.footer-col a:hover { color: var(--pink); }
+.footer-col a:hover { color: var(--accent); }
 
 /* Social-Icons statt Textlinks: runde Buttons nebeneinander statt
    gestapelter Zeilen — überschreibt display/margin von ".footer-col a"
@@ -1496,15 +1670,17 @@ button.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  /* 40px statt vorher 36px: einheitliche Tap-Ziel-Größe mit den übrigen
+     Icon-Buttons der Seite (.service-icon, .play-icon, .nav-mobile-toggle). */
+  width: 40px;
+  height: 40px;
   margin-bottom: 0;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: var(--white);
 }
 
-.social-icon svg { width: 18px; height: 18px; }
+.social-icon svg { width: 20px; height: 20px; }
 
 .footer-bottom {
   margin-top: 64px;
@@ -1519,7 +1695,7 @@ button.btn {
 }
 
 .footer-legal { display: flex; gap: 16px; }
-.footer-legal a:hover { color: var(--pink); }
+.footer-legal a:hover { color: var(--accent); }
 
 /* ---- Rechtstexte (Impressum/Datenschutz) ---- */
 .legal { max-width: 720px; margin-top: 8px; }
@@ -1552,10 +1728,10 @@ button.btn {
   margin-bottom: 6px;
 }
 
-.legal a { color: var(--pink); text-decoration: underline; }
+.legal a { color: var(--accent); text-decoration: underline; }
 .legal a:hover { opacity: 0.8; }
 
-.legal-todo { color: var(--pink); font-weight: 600; }
+.legal-todo { color: var(--accent); font-weight: 600; }
 
 /* ---- Projekt-Detailseite ---- */
 .project-hero {
@@ -1716,7 +1892,7 @@ button.btn {
   height: 40px;
   border-radius: 50%;
   border: 1px solid var(--line);
-  color: var(--pink);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1790,6 +1966,10 @@ button.btn {
      weg, um Kollisionen zu vermeiden. */
   .logo-mark { display: none; }
 
+  /* Ersatz für die versteckten .nav-links: Hamburger-Button rechts, öffnet
+     .nav-mobile-panel (siehe dort). */
+  .nav-mobile-toggle { display: flex; }
+
   .projects-grid,
   .video-grid,
   .image-grid { grid-template-columns: 1fr 1fr; }
@@ -1799,20 +1979,24 @@ button.btn {
   .team-grid { grid-template-columns: 1fr; }
 
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+
+  /* Ab hier (≤860px) whitespace:normal statt nowrap: der Satz ist bei
+     white-space:nowrap sonst in der ganzen Lücke zwischen 560 und 860px
+     (z.B. Handys im Querformat, kleine Tablets) breiter als der Viewport
+     und lief seitlich aus dem Frame heraus. Vorher stand diese Regel erst
+     im 560px-Block, deckte also genau diesen Bereich nicht ab. */
+  .footer-big { white-space: normal; }
 }
 
 @media (max-width: 560px) {
   .container { padding-left: 20px; padding-right: 20px; }
+  /* Gleiche 20px wie .container-Padding oben, damit der Button bündig mit
+     dem restlichen Seiteninhalt bleibt (siehe .logo-mark-Kommentar zu
+     .nav-mobile-toggle für die 32px-Variante). */
+  .nav-mobile-toggle { right: 20px; }
   .projects-grid,
   .video-grid,
   .image-grid { grid-template-columns: 1fr; }
   .trusted { flex-direction: column; align-items: flex-start; }
   .trusted-marquee { width: 100%; }
-}
-
-/* Scroll-Effekt der Projekt-Karten: auf kleinen Screens und bei reduzierter
-   Bewegungspräferenz deaktiviert (assets/js/scroll-effects.js läuft dort gar nicht
-   erst) — Karten stehen dank --p:1-Standard direkt an ihrer finalen Position. */
-@media (max-width: 860px), (prefers-reduced-motion: reduce) {
-  .projects-grid .project-card { --p: 1; }
 }

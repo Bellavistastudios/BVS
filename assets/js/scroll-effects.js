@@ -12,18 +12,22 @@
  * unsichtbar (siehe .js-morph/.is-docked in style.css) — es ist also wirklich
  * nichts zu sehen, bis das Bild an seiner finalen Position angekommen ist.
  *
- * Der Fortschritt hängt bewusst nur von der reinen Scroll-Distanz ab
- * (window.scrollY), nicht von der Position des Rasters relativ zum Viewport.
- * Dadurch steht bei scrollY = 0 (ganz oben) immer exakt der Hero-Fächer,
- * unabhängig von Viewport-Höhe oder der Höhe des Inhalts darüber (Hero,
- * Trusted-by, etc.) — eine vh-basierte Rechnung würde auf sehr hohen
- * Viewports (z.B. ein hochkant montierter externer Monitor) riesige
- * Pixelwerte für den Trigger ergeben und die Karten so schon beim Laden
- * (teilweise) andocken lassen, obwohl noch gar nicht gescrollt wurde.
+ * Der Andock-Zeitpunkt richtet sich nach der tatsächlichen Höhe des
+ * Hero-Bereichs (siehe measureHero()): die Karten sollen im Fächer sichtbar
+ * bleiben, solange der Hero überhaupt noch im Bild ist, und erst kurz bevor
+ * er komplett aus dem Viewport gescrollt wird andocken — nicht schon nach
+ * einer kurzen festen Strecke ganz oben auf der Seite (frühere Version, war
+ * auf hohen Fensterbreiten/kurzen Hero-Texten deutlich zu schnell vorbei).
+ * Dadurch steht bei scrollY = 0 (ganz oben) weiterhin immer exakt der
+ * Hero-Fächer, unabhängig von der Höhe des Inhalts darüber.
  *
- * Läuft bewusst nicht auf kleinen oder sehr flachen Screens (z.B. Smartphone
- * im Vollbild-Querformat) oder bei reduzierter Bewegungspräferenz — dort
- * bleiben Bild und Overlay einfach direkt sichtbar.
+ * Läuft auf jeder Fensterbreite/-höhe (auch schmal/quer/hochformat) — nur
+ * bei reduzierter Bewegungspräferenz bleiben Bild und Overlay direkt
+ * sichtbar, ohne Animation. Frühere Version hat den Effekt unterhalb von
+ * 860px Breite bzw. 560px Höhe komplett abgeschaltet; das griff aber auch
+ * schon bei einem schmal gezogenen Browserfenster (nicht nur auf einem
+ * echten Handy) — die Karten blieben dort dann einfach unbewegt in ihrer
+ * Rasterposition stehen, statt (wie gewünscht) zu animieren.
  */
 (function () {
   "use strict";
@@ -41,16 +45,15 @@
   window.scrollTo(0, 0);
 
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var isSmallScreen = window.matchMedia("(max-width: 860px)").matches;
-  var isShortScreen = window.matchMedia("(max-height: 560px)").matches;
-  if (reduceMotion || isSmallScreen || isShortScreen) return;
+  if (reduceMotion) return;
 
   var grid = document.querySelector(".projects-grid");
+  var hero = document.querySelector(".hero");
   // Nur die ursprünglichen 4 Karten animieren — die per Klick nachgeladenen
   // (.project-card--extra) haben kein passendes .hero-slot und bleiben außen vor.
   var cards = document.querySelectorAll(".projects-grid .project-card:not(.project-card--extra)");
   var heroSlots = document.querySelectorAll(".hero-slot");
-  if (!grid || !cards.length || cards.length !== heroSlots.length) return;
+  if (!grid || !hero || !cards.length || cards.length !== heroSlots.length) return;
 
   // Rotation, mit der jedes Bild im Hero-Fächer startet — blendet beim
   // Scrollen sanft auf 0 Grad (normale Rasterposition) aus.
@@ -61,9 +64,23 @@
   // liegen, die übrige Reihenfolge bleibt wie vorher.
   var stackZIndex = [60, 63, 61, 62];
 
-  // Max. Scroll-Strecke (px), über die vollständig angedockt wird — gedeckelt,
-  // damit der Effekt auf sehr hohen Viewports nicht unnötig träge wird.
-  var MAX_DOCK_DISTANCE = 450;
+  // Puffer, der vom Andock-Zeitpunkt abgezogen wird, damit die Karten nicht
+  // erst im exakten Moment des Verschwindens andocken, sondern schon kurz
+  // (20% einer Viewport-Höhe) davor — "kurz bevor" statt "genau wenn".
+  var EXIT_BUFFER_RATIO = 0.2;
+
+  // Absolute Seiten-Position (px von ganz oben), an der die Unterkante des
+  // Hero-Bereichs den oberen Bildschirmrand erreicht — also der Punkt, an
+  // dem der Hero (und mit ihm der Fächer) komplett aus dem Bild gescrollt
+  // wäre. Wird per measureHero() aktuell gehalten, weil sich die Hero-Höhe
+  // durch Zeilenumbrüche (Fensterbreite, Font-Nachladen) ändern kann.
+  var heroBottomAbs = 0;
+
+  function measureHero() {
+    heroBottomAbs = hero.getBoundingClientRect().bottom + window.scrollY;
+  }
+
+  measureHero();
 
   grid.classList.add("js-morph");
 
@@ -75,12 +92,13 @@
 
   function updateCards() {
     ticking = false;
+
     var vh = window.innerHeight;
-    var dockDistance = Math.min(vh * 0.5, MAX_DOCK_DISTANCE);
+    var dockDistance = Math.max(heroBottomAbs - vh * EXIT_BUFFER_RATIO, 200);
 
     // Fortschritt 0 → 1 rein anhand der Scroll-Position: bei scrollY = 0
     // (oberster Punkt der Seite) immer 0, nach "dockDistance" Pixeln
-    // Scrollen vollständig angedockt.
+    // Scrollen vollständig angedockt (siehe heroBottomAbs oben).
     var progress = window.scrollY / dockDistance;
     progress = Math.min(1, Math.max(0, progress));
 
@@ -124,22 +142,30 @@
     }
   }
 
+  function remeasureAndUpdate() {
+    measureHero();
+    requestUpdate();
+  }
+
   window.addEventListener("scroll", requestUpdate, { passive: true });
-  window.addEventListener("resize", requestUpdate);
+  // Fensterbreite ändert Zeilenumbrüche im Hero-Text und damit dessen Höhe
+  // (siehe heroBottomAbs) — bei reinem requestUpdate() bliebe der alte,
+  // inzwischen falsche Andock-Punkt stehen.
+  window.addEventListener("resize", remeasureAndUpdate);
   requestUpdate();
 
   // Die erste Berechnung läuft, bevor die selbst gehostete Schrift (Inter)
   // fertig geladen ist. Sobald sie nachlädt, kann sich der Text im Hero
   // verschieben (anderer Zeilenumbruch etc.) und damit auch die Position
-  // des Hero-Fächers — ohne Neuberechnung blieben die Bilder dann an ihrer
-  // alten, falschen Stelle hängen. Deshalb hier gezielt einmal nachrechnen,
-  // sobald alle Fonts wirklich bereitstehen.
+  // des Hero-Fächers UND dessen Höhe — ohne Neuberechnung bliebe der
+  // Andock-Punkt an seiner alten, falschen Stelle hängen. Deshalb hier
+  // gezielt einmal nachrechnen, sobald alle Fonts wirklich bereitstehen.
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(requestUpdate);
+    document.fonts.ready.then(remeasureAndUpdate);
   }
 
   // Zusätzliches Sicherheitsnetz: nach vollständigem Laden der Seite
   // (inkl. Bilder) einmal neu berechnen, falls sich durch Bild-Ladezeiten
   // noch irgendwo Layout verschoben hat.
-  window.addEventListener("load", requestUpdate);
+  window.addEventListener("load", remeasureAndUpdate);
 })();
