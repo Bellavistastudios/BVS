@@ -5,6 +5,13 @@
  * @media max-width:860px): der Hamburger-Button (.nav-mobile-toggle) blendet
  * ein Vollbild-Overlay (.nav-mobile-panel) mit denselben Links ein/aus.
  * Gleiches hidden-Muster wie #team-modal (siehe assets/js/team-modal.js).
+ *
+ * Derselbe Button öffnet UND schließt (kein separater Close-Button mehr) —
+ * er bleibt dadurch beim Öffnen/Schließen exakt an derselben Stelle im
+ * Header stehen, nur sein Inhalt morpht per .is-open (siehe style.css) von
+ * 3 Strichen zu einem X. .site-header bekommt dafür auf Mobile einen
+ * höheren z-index als .nav-mobile-panel (siehe style.css), sonst würde der
+ * Button hinter dem geöffneten Panel verschwinden.
  */
 (function () {
   "use strict";
@@ -17,6 +24,7 @@
     panel.hidden = false;
     toggle.classList.add("is-open");
     toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-label", "Menü schließen");
     document.body.style.overflow = "hidden";
   }
 
@@ -24,6 +32,7 @@
     panel.hidden = true;
     toggle.classList.remove("is-open");
     toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Menü öffnen");
     document.body.style.overflow = "";
   }
 
@@ -35,7 +44,10 @@
     }
   });
 
-  panel.querySelectorAll("[data-nav-mobile-close], a").forEach(function (el) {
+  // Menü-Links selbst schließen das Panel zusätzlich beim Antippen (bevor
+  // der Browser zur Ziel-Sektion navigiert) — der Hamburger/X-Button oben
+  // übernimmt jetzt allein das manuelle Öffnen/Schließen.
+  panel.querySelectorAll("a").forEach(function (el) {
     el.addEventListener("click", close);
   });
 

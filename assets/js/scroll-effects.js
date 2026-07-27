@@ -55,7 +55,39 @@
   if ("scrollRestoration" in history) {
     history.scrollRestoration = "manual";
   }
+
+  // Steht noch ein #kontakt/#leistungen/#team-Hash von einer früheren
+  // Navigation in der URL (z.B. weil man vorher auf "Contact" getippt
+  // hatte), springt der BROWSER SELBST beim Neuladen zu diesem Anker —
+  // unabhängig von jedem eigenen scrollTo() hier, und oft sogar erst nach
+  // dem ersten Layout-Durchlauf (Web-Font/Bilder laden nach), sodass ein
+  // einzelnes scrollTo(0,0) ganz am Anfang das nicht zuverlässig
+  // überstimmt. Nur bei einem ECHTEN Reload (nicht bei einem frischen Klick
+  // von einer anderen Seite auf z.B. "index.html#kontakt", der soll
+  // weiterhin normal zur Sektion springen) wird der Hash deshalb per
+  // replaceState aus der URL entfernt, bevor der Browser ihn anfassen kann.
+  function isReload() {
+    if (window.performance && typeof window.performance.getEntriesByType === "function") {
+      var entries = window.performance.getEntriesByType("navigation");
+      if (entries.length) return entries[0].type === "reload";
+    }
+    if (window.performance && window.performance.navigation) {
+      return window.performance.navigation.type === 1;
+    }
+    return false;
+  }
+
+  if (window.location.hash && isReload()) {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+
   window.scrollTo(0, 0);
+  // Zusätzliche, spätere Bestätigung: falls der Browser trotz entferntem
+  // Hash durch nachträgliche Layout-Verschiebungen (Web-Font/Bilder) doch
+  // noch einmal scrollt, hier nach vollständigem Laden hart zurück auf 0.
+  window.addEventListener("load", function () {
+    window.scrollTo(0, 0);
+  });
 
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduceMotion) return;
@@ -172,14 +204,21 @@
     window.addEventListener("resize", requestRestUpdate);
 
     if (heroVisual && "IntersectionObserver" in window) {
-      // rootMargin mit negativem unteren Wert verkleinert den effektiven
-      // Beobachtungsbereich von unten her — der Auslöser feuert dadurch
-      // schon, wenn .hero-visual noch zu einem Teil sichtbar ist (kurz
-      // BEVOR es komplett aus dem Bild gescrollt wäre), nicht erst im
-      // exakten Moment des vollständigen Verschwindens. Rein geometrie-
-      // basiert (Position von .hero-visual relativ zum Viewport) — hängt
-      // an keiner Stelle von window.innerHeight zum Zeitpunkt der ersten
-      // Scroll-Geste ab, ist also unempfindlich gegen die iOS-Adressleiste.
+      // .hero-visual verlässt das Bild beim Scrollen über die OBERE Kante
+      // (die Seite scrollt nach unten, der Fächer wandert nach oben aus dem
+      // Viewport) — der verkleinerte Beobachtungsbereich muss deshalb an der
+      // OBEREN Kante ansetzen (erstes Feld von rootMargin), nicht an der
+      // unteren wie im ursprünglichen (nicht funktionierenden) Versuch.
+      // Ein negativer oberer Wert zieht die effektive Ober-Kante des Roots
+      // um T Prozent der Bildschirmhöhe nach unten: der Auslöser feuert erst,
+      // sobald von .hero-visual nur noch dieser T%-Streifen oben im Bild
+      // übrig ist. Je KLEINER T, desto SPÄTER/knapper der Auslöser (bei T=10
+      // ist .hero-visual schon zu 90% verschwunden, bevor überhaupt etwas
+      // passiert) — genau umgekehrt zur ersten, falsch dimensionierten
+      // Fassung. Rein geometriebasiert (Position von .hero-visual relativ
+      // zum Viewport) — hängt an keiner Stelle von window.innerHeight zum
+      // Zeitpunkt der ersten Scroll-Geste ab, ist also unempfindlich gegen
+      // die iOS-Adressleiste.
       var flightObserver = new IntersectionObserver(
         function (entries) {
           entries.forEach(function (entry) {
@@ -189,7 +228,7 @@
             }
           });
         },
-        { rootMargin: "0px 0px -30% 0px", threshold: 0 }
+        { rootMargin: "-10% 0px 0px 0px", threshold: 0 }
       );
       flightObserver.observe(heroVisual);
     } else {

@@ -632,29 +632,6 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
   color: var(--accent);
 }
 
-.nav-mobile-close {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 40px;
-  height: 40px;
-  border: 1.5px solid var(--accent);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--accent);
-  font-size: 15px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.nav-mobile-close:hover {
-  background: rgba(205, 170, 254, 0.16);
-  transform: scale(1.06);
-}
-
 /* ---- Hero ---- */
 .hero {
   padding-top: 64px;
@@ -1990,6 +1967,16 @@ button.btn {
   /* Ersatz für die versteckte .nav-pill: Hamburger-Button rechts, öffnet
      .nav-mobile-panel (siehe dort). */
   .nav-mobile-toggle { display: flex; }
+
+  /* .nav-mobile-panel liegt bei z-index:300 über allem — ohne dieses
+     Override würde der ganze (position:sticky, eigene Stacking-Context)
+     .site-header samt Hamburger-Button dahinter verschwinden, sobald das
+     Menü aufgeht. Auf Mobile ist der Hamburger ohnehin das einzig sichtbare
+     Kind von .site-header (Logo/Pille siehe oben ausgeblendet) — derselbe
+     Button bleibt dadurch beim Öffnen exakt an derselben Stelle stehen und
+     morpht per .is-open (siehe dort) nur seinen Inhalt (Striche → X), statt
+     zu einem optisch versetzten, separaten Close-Button zu springen. */
+  .site-header { z-index: 301; }
 
   .projects-grid,
   .video-grid,
