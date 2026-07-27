@@ -5,7 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bella Vista Studios | Creative Agency from Innsbruck</title>
 <meta name="description" content="Bella Vista Studios (BVS) is a creative agency from Innsbruck working on photo, video, and design projects.">
-<link rel="stylesheet" href="assets/css/style.css?v=49">
+<link rel="stylesheet" href="assets/css/style.css?v=51">
+
+<!-- Strukturierte Daten (schema.org/JSON-LD) für Suchmaschinen. ProfessionalService
+     statt generischem "Organization", weil wir über die echte Adresse auch für die
+     lokale Google-Suche (Innsbruck) auffindbar sein wollen. Nur auf der Startseite,
+     die als kanonische Entity-Quelle für die ganze Domain reicht. Reine statische
+     Daten, kein User-Input, daher keine Sicherheitsrelevanz (kein XSS-Vektor). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "Bella Vista Studios",
+  "alternateName": "BVS",
+  "url": "https://bellavista-studios.com",
+  "logo": "https://bellavista-studios.com/assets/img/logo.png",
+  "description": "Bella Vista Studios (BVS) is a creative media agency from Innsbruck, Austria, working on photography, video, design and social media projects.",
+  "telephone": "+43 6776 1389278",
+  "email": "info@bellavista-studios.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Gabelsbergerstraße 22",
+    "addressLocality": "Innsbruck",
+    "postalCode": "6020",
+    "addressCountry": "AT"
+  },
+  "areaServed": "Austria",
+  "founder": [
+    { "@type": "Person", "name": "Henry Halmburger" },
+    { "@type": "Person", "name": "Leonard Bies" },
+    { "@type": "Person", "name": "Carlo Spadaro" }
+  ],
+  "sameAs": [
+    "https://www.instagram.com/bellavista.studios/",
+    "https://www.linkedin.com/in/bella-vista-studios-5378a433b/"
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -174,7 +210,7 @@
       </div>
 
       <div class="projects-more">
-        <button type="button" class="btn btn-outline" id="load-more-projects">View All Projects</button>
+        <button type="button" class="btn btn-outline" id="load-more-projects">View More Projects</button>
       </div>
     </section>
   </div>
@@ -513,11 +549,11 @@
 
 <script src="assets/js/header-scroll.js?v=1" defer></script>
 <script src="assets/js/logo-contrast.js?v=2" defer></script>
-<script src="assets/js/scroll-effects.js?v=4" defer></script>
+<script src="assets/js/scroll-effects.js?v=7" defer></script>
 <script src="assets/js/team-modal.js?v=1" defer></script>
 <script src="assets/js/services-accordion.js?v=1" defer></script>
 <script src="assets/js/toolbox-orbit.js?v=3" defer></script>
-<script src="assets/js/projects-expand.js?v=2" defer></script>
-<script src="assets/js/scroll-reveal.js?v=1" defer></script>
+<script src="assets/js/projects-expand.js?v=4" defer></script>
+<script src="assets/js/scroll-reveal.js?v=2" defer></script>
 </body>
 </html>

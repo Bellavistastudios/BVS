@@ -1,4 +1,4 @@
-// "View All Projects" auf der Startseite: klappt die restlichen Projekte
+// "View More Projects" auf der Startseite: klappt die restlichen Projekte
 // direkt unterhalb der ersten 4 auf (statt auf projekte.html weiterzuleiten)
 // und über denselben Button per "View Less" auch wieder ein.
 (function () {

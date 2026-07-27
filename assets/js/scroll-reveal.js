@@ -43,9 +43,21 @@
     });
   }
 
+  // Die ersten 4 Projekt-Karten sind auf der Startseite zugleich die Karten,
+  // deren <img> assets/js/scroll-effects.js beim Laden in den Hero-Fächer
+  // verschiebt. Bekämen sie zusätzlich .reveal (= opacity:0 bis sie in den
+  // Viewport scrollen), blieben ihre Bilder trotz Verschiebung unsichtbar,
+  // weil die Elternkachel (.project-card) noch unsichtbar ist — das
+  // Verschieben selbst dient dort schon als "Reveal". Nur auf Seiten ohne
+  // Hero-Fächer (z.B. projekte.html) bekommen sie die normale Scroll-Reveal-
+  // Behandlung.
+  var hasHeroFan = document.querySelectorAll(".hero-slot").length > 0;
+
   // Gruppen mit Staffelung: Geschwister-Elemente derselben Liste/desselben
   // Rasters erscheinen nacheinander.
-  reveal(document.querySelectorAll(".projects-grid > .project-card:not(.project-card--extra)"), true);
+  if (!hasHeroFan) {
+    reveal(document.querySelectorAll(".projects-grid > .project-card:not(.project-card--extra)"), true);
+  }
   reveal(document.querySelectorAll(".services-list > .service-item"), true);
   reveal(document.querySelectorAll(".team-grid > .team-col"), true);
   reveal(document.querySelectorAll(".video-grid > .media-placeholder, .image-grid > .media-placeholder"), true);

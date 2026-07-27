@@ -28,6 +28,18 @@
 (function () {
   "use strict";
 
+  // Browser stellen beim Reload gerne die vorherige Scroll-Position wieder
+  // her (history.scrollRestoration = "auto" per Default). War man vorher
+  // z.B. schon an den Projekten vorbeigescrollt, startet die Seite dann
+  // NICHT bei scrollY = 0 — der Fächer-Effekt unten rechnet aber genau
+  // damit und zeigt die Bilder je nach Rest-Scrollposition nur teilweise
+  // oder gar nicht im Hero an. "manual" erzwingt, dass ein frischer Aufruf
+  // immer oben startet.
+  if ("scrollRestoration" in history) {
+    history.scrollRestoration = "manual";
+  }
+  window.scrollTo(0, 0);
+
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var isSmallScreen = window.matchMedia("(max-width: 860px)").matches;
   var isShortScreen = window.matchMedia("(max-height: 560px)").matches;
@@ -43,6 +55,11 @@
   // Rotation, mit der jedes Bild im Hero-Fächer startet — blendet beim
   // Scrollen sanft auf 0 Grad (normale Rasterposition) aus.
   var startRotation = [-12, -4, 6, 14];
+
+  // Stapel-Reihenfolge im Fächer: Karten-Index (0=Agrar Tirol, 1=Autopark,
+  // 2=Lightweight, 3=Corthea) → z-index. Autopark (Index 1) soll zuoberst
+  // liegen, die übrige Reihenfolge bleibt wie vorher.
+  var stackZIndex = [60, 63, 61, 62];
 
   // Max. Scroll-Strecke (px), über die vollständig angedockt wird — gedeckelt,
   // damit der Effekt auf sehr hohen Viewports nicht unnötig träge wird.
@@ -96,7 +113,7 @@
       img.style.objectFit = "cover";
       img.style.borderRadius = "var(--radius-lg)";
       img.style.transform = "rotate(" + rotation.toFixed(2) + "deg)";
-      img.style.zIndex = "60";
+      img.style.zIndex = stackZIndex[i];
     });
   }
 
@@ -110,4 +127,19 @@
   window.addEventListener("scroll", requestUpdate, { passive: true });
   window.addEventListener("resize", requestUpdate);
   requestUpdate();
+
+  // Die erste Berechnung läuft, bevor die selbst gehostete Schrift (Inter)
+  // fertig geladen ist. Sobald sie nachlädt, kann sich der Text im Hero
+  // verschieben (anderer Zeilenumbruch etc.) und damit auch die Position
+  // des Hero-Fächers — ohne Neuberechnung blieben die Bilder dann an ihrer
+  // alten, falschen Stelle hängen. Deshalb hier gezielt einmal nachrechnen,
+  // sobald alle Fonts wirklich bereitstehen.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(requestUpdate);
+  }
+
+  // Zusätzliches Sicherheitsnetz: nach vollständigem Laden der Seite
+  // (inkl. Bilder) einmal neu berechnen, falls sich durch Bild-Ladezeiten
+  // noch irgendwo Layout verschoben hat.
+  window.addEventListener("load", requestUpdate);
 })();
