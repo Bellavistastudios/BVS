@@ -2,43 +2,56 @@
  * Bella Vista Studios — Scroll-Effekt für die Projekt-Bilder.
  *
  * Jedes der 4 Projektbilder existiert nur EINMAL im DOM (im Projekte-Raster).
- * Beim Scrollen wird genau dieses eine Bild-Element vorübergehend "fixed"
- * positioniert und live zwischen seinem unsichtbaren Anker-Platz im Hero
- * (.hero-slot) und seiner tatsächlichen Position im Raster interpoliert.
- * Alle 4 Bilder folgen dabei demselben, gemeinsamen Scroll-Fortschritt — sie
- * setzen sich also gleichzeitig in Bewegung, nicht nacheinander.
+ * Es wird vorübergehend "fixed" positioniert und zwischen seinem unsichtbaren
+ * Anker-Platz im Hero (.hero-slot) und seiner tatsächlichen Position im
+ * Raster interpoliert. Alle 4 Bilder folgen demselben Fortschritt (0 → 1) —
+ * sie setzen sich also gleichzeitig in Bewegung, nicht nacheinander.
  *
- * Solange ein Bild unterwegs ist, bleibt das Overlay der jeweiligen Karte
- * unsichtbar (siehe .js-morph/.is-docked in style.css) — es ist also wirklich
- * nichts zu sehen, bis das Bild an seiner finalen Position angekommen ist.
+ * Solange ein Bild "unterwegs" ist (progress < 1), bleibt das Overlay der
+ * jeweiligen Karte unsichtbar (siehe .js-morph/.is-docked in style.css).
  *
- * Der Andock-Zeitpunkt richtet sich nach der tatsächlichen Höhe des
- * Hero-Bereichs (siehe measureHero()): die Karten sollen im Fächer sichtbar
- * bleiben, solange der Hero überhaupt noch im Bild ist, und erst kurz bevor
- * er komplett aus dem Viewport gescrollt wird andocken — nicht schon nach
- * einer kurzen festen Strecke ganz oben auf der Seite (frühere Version, war
- * auf hohen Fensterbreiten/kurzen Hero-Texten deutlich zu schnell vorbei).
- * Dadurch steht bei scrollY = 0 (ganz oben) weiterhin immer exakt der
- * Hero-Fächer, unabhängig von der Höhe des Inhalts darüber.
+ * Desktop und Mobile laufen bewusst über zwei komplett getrennte Mechanismen
+ * (siehe unten) statt über dieselbe Formel mit ein paar angepassten Zahlen —
+ * mehrere Versuche, das über einen gemeinsamen, rein scrollY/vh-basierten
+ * Schwellwert zu lösen, sind auf echten Mobilgeräten zuverlässig
+ * fehlgeschlagen (siehe Mobile-Abschnitt unten für den Grund).
  *
- * Läuft auf jeder Fensterbreite/-höhe (auch schmal/quer/hochformat) — nur
- * bei reduzierter Bewegungspräferenz bleiben Bild und Overlay direkt
- * sichtbar, ohne Animation. Frühere Version hat den Effekt unterhalb von
- * 860px Breite bzw. 560px Höhe komplett abgeschaltet; das griff aber auch
- * schon bei einem schmal gezogenen Browserfenster (nicht nur auf einem
- * echten Handy) — die Karten blieben dort dann einfach unbewegt in ihrer
- * Rasterposition stehen, statt (wie gewünscht) zu animieren.
+ * ---- Desktop (Breite > MOBILE_BREAKPOINT) ----
+ * Fortschritt hängt kontinuierlich an der Scroll-Position: bei scrollY = 0
+ * steht der Fächer, nach "dockDistance" Pixeln Scrollen ist er angedockt.
+ * dockDistance richtet sich nach der tatsächlichen Hero-Höhe (measureHero()),
+ * damit die Karten sichtbar bleiben, solange der Hero überhaupt im Bild ist.
+ *
+ * ---- Mobile (Breite ≤ MOBILE_BREAKPOINT) ----
+ * EIN rein scrollY/vh-basierter Schwellwert ist auf echten Handy-Browsern
+ * nicht robust genug: iOS Safari ändert window.innerHeight WÄHREND der
+ * ersten Scroll-Geste (die Adressleiste blendet aus, sobald man zu scrollen
+ * beginnt), und genau das fließt in jede vh-basierte Schwellwert-Formel mit
+ * ein. Ergebnis: der berechnete Start-/Andockpunkt springt mitten in der
+ * allerersten Berührung nach unten, der Fortschritt schnellt sofort auf 1 —
+ * die Kacheln "fliegen" beim ersten Touch weg, bevor überhaupt sichtbar
+ * gescrollt wurde. Zwei vorherige Versuche mit engerem/weiterem Puffer sind
+ * daran gescheitert, weil das Problem nicht die Zahlen waren, sondern die
+ * Abhängigkeit von vh an sich.
+ * Deshalb hier zwei von Scroll-Mathematik komplett entkoppelte Bausteine:
+ * 1) Ruhephase: progress bleibt exakt 0, das Bild folgt per fixed-Position +
+ *    Live-Messung von .hero-slot einfach ganz normal dem Scrollen (keine
+ *    Schwellwert-Berechnung nötig, nur "wo ist der Slot gerade").
+ * 2) Auslöser: ein IntersectionObserver auf .hero-visual (mit verkleinertem
+ *    Root über rootMargin) meldet zuverlässig — unabhängig von vh-Wackeln —,
+ *    wann der Fächer kurz davor ist, aus dem Bild zu scrollen.
+ * 3) Flug: läuft danach EINMALIG zeitbasiert (requestAnimationFrame +
+ *    performance.now(), MOBILE_FLIGHT_MS) zur Rasterposition, komplett
+ *    unabhängig von weiterem Scrollen — dadurch immer exakt gleich lang und
+ *    tatsächlich wahrnehmbar, egal wie schnell/langsam weitergescrollt wird.
  */
 (function () {
   "use strict";
 
   // Browser stellen beim Reload gerne die vorherige Scroll-Position wieder
-  // her (history.scrollRestoration = "auto" per Default). War man vorher
-  // z.B. schon an den Projekten vorbeigescrollt, startet die Seite dann
-  // NICHT bei scrollY = 0 — der Fächer-Effekt unten rechnet aber genau
-  // damit und zeigt die Bilder je nach Rest-Scrollposition nur teilweise
-  // oder gar nicht im Hero an. "manual" erzwingt, dass ein frischer Aufruf
-  // immer oben startet.
+  // her (history.scrollRestoration = "auto" per Default). "manual" erzwingt,
+  // dass ein frischer Aufruf immer oben startet — beide Modi unten gehen
+  // davon aus, bei scrollY = 0 zu beginnen.
   if ("scrollRestoration" in history) {
     history.scrollRestoration = "manual";
   }
@@ -49,6 +62,7 @@
 
   var grid = document.querySelector(".projects-grid");
   var hero = document.querySelector(".hero");
+  var heroVisual = document.querySelector(".hero-visual");
   // Nur die ursprünglichen 4 Karten animieren — die per Klick nachgeladenen
   // (.project-card--extra) haben kein passendes .hero-slot und bleiben außen vor.
   var cards = document.querySelectorAll(".projects-grid .project-card:not(.project-card--extra)");
@@ -56,7 +70,7 @@
   if (!grid || !hero || !cards.length || cards.length !== heroSlots.length) return;
 
   // Rotation, mit der jedes Bild im Hero-Fächer startet — blendet beim
-  // Scrollen sanft auf 0 Grad (normale Rasterposition) aus.
+  // Andocken sanft auf 0 Grad (normale Rasterposition) aus.
   var startRotation = [-12, -4, 6, 14];
 
   // Stapel-Reihenfolge im Fächer: Karten-Index (0=Agrar Tirol, 1=Autopark,
@@ -64,75 +78,22 @@
   // liegen, die übrige Reihenfolge bleibt wie vorher.
   var stackZIndex = [60, 63, 61, 62];
 
-  // Puffer, der vom Andock-Zeitpunkt abgezogen wird, damit die Karten nicht
-  // erst im exakten Moment des Verschwindens andocken, sondern schon kurz
-  // (20% einer Viewport-Höhe) davor — "kurz bevor" statt "genau wenn".
-  var EXIT_BUFFER_RATIO = 0.2;
-
-  // Auf Mobile läuft die Bewegung über einen eigenen, kurzen Abschnitt statt
-  // über die gesamte Scrollstrecke durch den Hero: die Karten stehen im
-  // Fächer erst mal still (progress bleibt 0, keine sichtbare Bewegung),
-  // und beginnen erst kurz bevor der Hero-Fächer aus dem Bild gescrollt
-  // würde. Zwei Gründe: (1) Bei der alten Regel (progress ab scrollY=0)
-  // lief die Animation faktisch unbemerkt im Hintergrund ab, während der
-  // Hero-Text noch gelesen wurde. (2) Sie muss trotzdem fertig ("is-docked")
-  // sein, BEVOR die "Trusted by"-Sektion (folgt direkt auf den Hero) am
-  // unteren Bildschirmrand auftaucht, sonst liegt das fliegende Bild
-  // (position:fixed, hoher z-index, siehe updateCards) über den Logos.
-  // MOBILE_END_BUFFER_RATIO markiert den Andock-Punkt (bei
-  // scrollY = heroBottomAbs - vh*1.05, also knapp bevor die Hero-Unterkante
-  // den unteren Bildschirmrand erreicht). MOBILE_START_WINDOW_RATIO
-  // bestimmt, wie viele Viewport-Höhen VOR diesem Andock-Punkt die Bewegung
-  // einsetzt — 0.6 heißt: erst in den letzten 60% eines Bildschirms
-  // Scrollstrecke vor dem Andocken passiert überhaupt etwas.
   var MOBILE_BREAKPOINT = 860;
-  var MOBILE_END_BUFFER_RATIO = 1.05;
-  var MOBILE_START_WINDOW_RATIO = 0.6;
-
-  // Absolute Seiten-Position (px von ganz oben), an der die Unterkante des
-  // Hero-Bereichs den oberen Bildschirmrand erreicht — also der Punkt, an
-  // dem der Hero (und mit ihm der Fächer) komplett aus dem Bild gescrollt
-  // wäre. Wird per measureHero() aktuell gehalten, weil sich die Hero-Höhe
-  // durch Zeilenumbrüche (Fensterbreite, Font-Nachladen) ändern kann.
-  var heroBottomAbs = 0;
-
-  function measureHero() {
-    heroBottomAbs = hero.getBoundingClientRect().bottom + window.scrollY;
-  }
-
-  measureHero();
+  // Einmalig beim Laden entschieden, gilt für den Rest der Seiten-Lebenszeit
+  // — kein Umschalten mitten in der Session bei Fenstergrößenänderung über
+  // die Grenze hinweg (unnötiger Aufwand für einen praktisch nie
+  // auftretenden Fall auf echten Geräten).
+  var isMobileMode = window.innerWidth <= MOBILE_BREAKPOINT;
 
   grid.classList.add("js-morph");
-
-  var ticking = false;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
 
-  function updateCards() {
-    ticking = false;
-
-    var vh = window.innerHeight;
-    var isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-    var progress;
-
-    if (isMobile) {
-      // Andock-Punkt und kurzes Bewegungsfenster davor (siehe Kommentar zu
-      // den MOBILE_*-Konstanten oben) statt Fortschritt ab scrollY = 0.
-      var dockPoint = Math.max(heroBottomAbs - vh * MOBILE_END_BUFFER_RATIO, 200);
-      var startPoint = Math.max(dockPoint - vh * MOBILE_START_WINDOW_RATIO, 0);
-      progress = (window.scrollY - startPoint) / Math.max(dockPoint - startPoint, 1);
-    } else {
-      // Fortschritt 0 → 1 rein anhand der Scroll-Position: bei scrollY = 0
-      // (oberster Punkt der Seite) immer 0, nach "dockDistance" Pixeln
-      // Scrollen vollständig angedockt (siehe heroBottomAbs oben).
-      var dockDistance = Math.max(heroBottomAbs - vh * EXIT_BUFFER_RATIO, 200);
-      progress = window.scrollY / dockDistance;
-    }
-
-    progress = Math.min(1, Math.max(0, progress));
-
+  // Gemeinsam von Desktop- und Mobile-Pfad genutzt: positioniert die 4 Bilder
+  // für einen gegebenen Fortschritt (0 = Hero-Fächer, 1 = angedockt im Raster).
+  function applyProgress(progress) {
     grid.classList.toggle("is-docked", progress >= 1);
 
     cards.forEach(function (card, i) {
@@ -166,37 +127,131 @@
     });
   }
 
-  function requestUpdate() {
-    if (!ticking) {
-      window.requestAnimationFrame(updateCards);
-      ticking = true;
+  if (isMobileMode) {
+    // ---- Mobile ----
+    var MOBILE_FLIGHT_MS = 650;
+    var mobileTriggered = false;
+    var mobileAnimStart = 0;
+    var restTicking = false;
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
     }
-  }
 
-  function remeasureAndUpdate() {
+    // Ruhephase: progress bleibt konstant 0, folgt aber bei jedem Scroll-
+    // Event neu berechnet der Live-Position von .hero-slot — dadurch scrollt
+    // das (fixed positionierte) Bild optisch ganz normal mit der Seite mit,
+    // ohne dass irgendein Schwellwert erreicht werden müsste.
+    function requestRestUpdate() {
+      if (mobileTriggered || restTicking) return;
+      restTicking = true;
+      window.requestAnimationFrame(function () {
+        restTicking = false;
+        if (!mobileTriggered) applyProgress(0);
+      });
+    }
+
+    // Flug: einmalig ausgelöst, läuft rein zeitbasiert über
+    // MOBILE_FLIGHT_MS zur Rasterposition — unabhängig davon, ob/wie schnell
+    // danach weitergescrollt wird.
+    function stepFlight() {
+      var t = Math.min(1, (performance.now() - mobileAnimStart) / MOBILE_FLIGHT_MS);
+      applyProgress(easeOutCubic(t));
+      if (t < 1) window.requestAnimationFrame(stepFlight);
+    }
+
+    function triggerFlight() {
+      if (mobileTriggered) return;
+      mobileTriggered = true;
+      mobileAnimStart = performance.now();
+      window.requestAnimationFrame(stepFlight);
+    }
+
+    applyProgress(0);
+    window.addEventListener("scroll", requestRestUpdate, { passive: true });
+    window.addEventListener("resize", requestRestUpdate);
+
+    if (heroVisual && "IntersectionObserver" in window) {
+      // rootMargin mit negativem unteren Wert verkleinert den effektiven
+      // Beobachtungsbereich von unten her — der Auslöser feuert dadurch
+      // schon, wenn .hero-visual noch zu einem Teil sichtbar ist (kurz
+      // BEVOR es komplett aus dem Bild gescrollt wäre), nicht erst im
+      // exakten Moment des vollständigen Verschwindens. Rein geometrie-
+      // basiert (Position von .hero-visual relativ zum Viewport) — hängt
+      // an keiner Stelle von window.innerHeight zum Zeitpunkt der ersten
+      // Scroll-Geste ab, ist also unempfindlich gegen die iOS-Adressleiste.
+      var flightObserver = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) {
+              flightObserver.disconnect();
+              triggerFlight();
+            }
+          });
+        },
+        { rootMargin: "0px 0px -30% 0px", threshold: 0 }
+      );
+      flightObserver.observe(heroVisual);
+    } else {
+      // Kein IntersectionObserver verfügbar (sehr alter Browser) — Karten
+      // bleiben dann einfach ruhig im Raster stehen, ohne Fächer-Effekt,
+      // statt mit einer unsicheren Ersatzformel zu raten.
+      triggerFlight();
+    }
+  } else {
+    // ---- Desktop ----
+    // Puffer, der vom Andock-Zeitpunkt abgezogen wird, damit die Karten
+    // nicht erst im exakten Moment des Verschwindens andocken, sondern
+    // schon kurz (20% einer Viewport-Höhe) davor — "kurz bevor" statt
+    // "genau wenn".
+    var EXIT_BUFFER_RATIO = 0.2;
+    var heroBottomAbs = 0;
+    var ticking = false;
+
+    function measureHero() {
+      heroBottomAbs = hero.getBoundingClientRect().bottom + window.scrollY;
+    }
+
+    function updateCards() {
+      ticking = false;
+      var vh = window.innerHeight;
+      var dockDistance = Math.max(heroBottomAbs - vh * EXIT_BUFFER_RATIO, 200);
+      var progress = Math.min(1, Math.max(0, window.scrollY / dockDistance));
+      applyProgress(progress);
+    }
+
+    function requestUpdate() {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(updateCards);
+      }
+    }
+
+    function remeasureAndUpdate() {
+      measureHero();
+      requestUpdate();
+    }
+
     measureHero();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    // Fensterbreite ändert Zeilenumbrüche im Hero-Text und damit dessen Höhe
+    // (siehe heroBottomAbs) — bei reinem requestUpdate() bliebe der alte,
+    // inzwischen falsche Andock-Punkt stehen.
+    window.addEventListener("resize", remeasureAndUpdate);
     requestUpdate();
+
+    // Die erste Berechnung läuft, bevor die selbst gehostete Schrift (Inter)
+    // fertig geladen ist. Sobald sie nachlädt, kann sich der Text im Hero
+    // verschieben (anderer Zeilenumbruch etc.) und damit auch die Position
+    // des Hero-Fächers UND dessen Höhe — ohne Neuberechnung bliebe der
+    // Andock-Punkt an seiner alten, falschen Stelle hängen.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(remeasureAndUpdate);
+    }
+
+    // Zusätzliches Sicherheitsnetz: nach vollständigem Laden der Seite
+    // (inkl. Bilder) einmal neu berechnen, falls sich durch Bild-Ladezeiten
+    // noch irgendwo Layout verschoben hat.
+    window.addEventListener("load", remeasureAndUpdate);
   }
-
-  window.addEventListener("scroll", requestUpdate, { passive: true });
-  // Fensterbreite ändert Zeilenumbrüche im Hero-Text und damit dessen Höhe
-  // (siehe heroBottomAbs) — bei reinem requestUpdate() bliebe der alte,
-  // inzwischen falsche Andock-Punkt stehen.
-  window.addEventListener("resize", remeasureAndUpdate);
-  requestUpdate();
-
-  // Die erste Berechnung läuft, bevor die selbst gehostete Schrift (Inter)
-  // fertig geladen ist. Sobald sie nachlädt, kann sich der Text im Hero
-  // verschieben (anderer Zeilenumbruch etc.) und damit auch die Position
-  // des Hero-Fächers UND dessen Höhe — ohne Neuberechnung bliebe der
-  // Andock-Punkt an seiner alten, falschen Stelle hängen. Deshalb hier
-  // gezielt einmal nachrechnen, sobald alle Fonts wirklich bereitstehen.
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(remeasureAndUpdate);
-  }
-
-  // Zusätzliches Sicherheitsnetz: nach vollständigem Laden der Seite
-  // (inkl. Bilder) einmal neu berechnen, falls sich durch Bild-Ladezeiten
-  // noch irgendwo Layout verschoben hat.
-  window.addEventListener("load", remeasureAndUpdate);
 })();
