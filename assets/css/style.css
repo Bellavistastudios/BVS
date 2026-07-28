@@ -2025,25 +2025,26 @@ button.btn {
 
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
 
-  /* Nicht beabsichtigt: .footer-bottom hat 3 Kinder (Copyright,
-     .footer-legal, Innsbruck-Span). Passen auf schmalen Screens nicht mehr
-     alle drei in eine Zeile, bricht flex-wrap um — landet dann aber jedes
-     der 3 allein auf einer eigenen Zeile, und ein einzelnes Flex-Kind pro
-     Zeile hängt bei space-between links statt zentriert zu sein (nichts
-     davon war zentriert, "Datenschutz mittig" war reiner Zufall). Fix:
-     display:contents löst .footer-legal als Box auf, Impressum/Datenschutz
-     werden dadurch selbst zu direkten Kindern von .footer-bottom — Copyright
-     ist meist allein lang genug für eine eigene Zeile, Impressum/Datenschutz/
-     Innsbruck passen zusammen auf die nächste und space-between verteilt sie
-     dort gleichmäßig, Datenschutz landet als mittleres von drei Elementen
-     automatisch in der Mitte. Die Desktop-Regel (flex:1 auf Copyright/
-     Innsbruck, siehe dort) hier zurücksetzen — sonst zieht sich die
-     Innsbruck-Zeile über die volle Zeilenbreite und die 3 Wörter stehen
-     alle links geklumpt statt gleichmäßig verteilt. */
+  /* .footer-bottom hat 4 "logische" Elemente (Copyright, Impressum,
+     Datenschutz, Innsbruck-Span — .footer-legal wird per display:contents
+     aufgelöst, siehe unten). Sich auf flex-wrap zu verlassen, welche davon
+     sich eine Zeile teilen, war nicht robust: je nach Textlänge/Gerätebreite
+     landen mal 1+3, mal 2+2 pro Zeile (letzteres unregelmäßig und nicht das
+     gewünschte Bild). Stattdessen hier bewusst erzwungen: jedes der 4 auf
+     eine eigene, zentrierte Zeile — vorhersehbar unabhängig von Textlänge
+     oder exakter Bildschirmbreite, und die Desktop-Regel (flex:1 auf
+     Copyright/Innsbruck für die Mitten-Ausrichtung dort) hier zurückgesetzt,
+     die gilt nur für die einzeilige Desktop-Anordnung. */
+  .footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
   .footer-bottom > span:first-child,
   .footer-bottom > span:last-child {
     flex: initial;
-    text-align: left;
+    text-align: center;
   }
   .footer-legal { display: contents; }
 
