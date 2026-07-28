@@ -37,13 +37,19 @@
  * 1) Ruhephase: progress bleibt exakt 0, das Bild folgt per fixed-Position +
  *    Live-Messung von .hero-slot einfach ganz normal dem Scrollen (keine
  *    Schwellwert-Berechnung nötig, nur "wo ist der Slot gerade").
- * 2) Auslöser: ein dauerhaft aktiver IntersectionObserver auf .trusted (die
- *    "Trusted by"-Leiste, verkleinerter Root über rootMargin) meldet
- *    zuverlässig — unabhängig von vh-Wackeln —, sobald die Leiste beim
- *    Scrollen in das obere Drittel des Bildschirms eintritt (Fortschritts-
- *    Ziel 1) bzw. es beim Zurückscrollen wieder verlässt (Ziel 0) — der
- *    Effekt läuft dadurch in beide Richtungen.
- * 3) Flug: läuft danach zeitbasiert (requestAnimationFrame +
+ * 2) Andock-Auslöser: ein dauerhaft aktiver IntersectionObserver auf
+ *    .trusted (die "Trusted by"-Leiste, verkleinerter Root über rootMargin)
+ *    meldet zuverlässig — unabhängig von vh-Wackeln —, sobald die Leiste
+ *    beim Scrollen in das obere Drittel des Bildschirms eintritt
+ *    (Fortschritts-Ziel 1).
+ * 3) Rückflug-Auslöser: bewusst NICHT das Verlassen der Trusted-Leiste —
+ *    das feuert nämlich auch beim normalen Weiterscrollen nach unten,
+ *    sobald die Leiste oben aus dem Bild läuft, und würde die Karten dann
+ *    ungewollt mitten auf der Seite zurück in den Fächer schicken.
+ *    Stattdessen ein einfacher scrollY-Schwellwert: erst wenn man wirklich
+ *    wieder ganz oben beim Hero/BVS-Bereich ankommt, geht es zurück auf
+ *    Ziel 0.
+ * 4) Flug: läuft danach zeitbasiert (requestAnimationFrame +
  *    performance.now(), MOBILE_FLIGHT_MS) zur jeweiligen Zielposition,
  *    komplett unabhängig von weiterem Scrollen — dadurch immer exakt gleich
  *    lang und tatsächlich wahrnehmbar, egal wie schnell/langsam
@@ -130,21 +136,36 @@
 
   // Gemeinsam von Desktop- und Mobile-Pfad genutzt: positioniert die 4 Bilder
   // für einen gegebenen Fortschritt (0 = Hero-Fächer, 1 = angedockt im Raster).
+  // Erst ALLE getBoundingClientRect()-Werte einsammeln, danach erst die
+  // Styles schreiben — statt pro Karte lesen/schreiben/lesen/schreiben zu
+  // verschränken. Jeder Schreibzugriff auf ein fixed-positioniertes Bild
+  // invalidiert das Layout; folgt direkt danach ein Lesezugriff für die
+  // nächste Karte, erzwingt der Browser eine synchrone Neuberechnung
+  // (Layout-Thrashing). Bei 4 Karten und bis zu 60 Aufrufen/Sekunde während
+  // des Flugs war genau das der Grund, warum die Animation auf
+  // Mobilgeräten komplett hängenblieb.
   function applyProgress(progress) {
     grid.classList.toggle("is-docked", progress >= 1);
+
+    if (progress >= 1) {
+      // Angekommen: Inline-Styling entfernen, Bilder liegen normal im Raster.
+      cards.forEach(function (card) {
+        var img = card.querySelector("img");
+        if (img) img.style.cssText = "";
+      });
+      return;
+    }
+
+    var rects = Array.prototype.map.call(cards, function (card, i) {
+      return { slot: heroSlots[i].getBoundingClientRect(), card: card.getBoundingClientRect() };
+    });
 
     cards.forEach(function (card, i) {
       var img = card.querySelector("img");
       if (!img) return;
 
-      if (progress >= 1) {
-        // Angekommen: Inline-Styling entfernen, Bild liegt normal im Raster.
-        img.style.cssText = "";
-        return;
-      }
-
-      var slotRect = heroSlots[i].getBoundingClientRect();
-      var cardRect = card.getBoundingClientRect();
+      var slotRect = rects[i].slot;
+      var cardRect = rects[i].card;
       var top = lerp(slotRect.top, cardRect.top, progress);
       var left = lerp(slotRect.left, cardRect.left, progress);
       var width = lerp(slotRect.width, cardRect.width, progress);
@@ -167,12 +188,14 @@
   if (isMobileMode) {
     // ---- Mobile ----
     var MOBILE_FLIGHT_MS = 650;
-    var restTicking = false;
+    // Ab hier gilt man als "wieder oben beim Hero/BVS-Bereich" — bewusst
+    // nicht exakt 0, ein paar Pixel Toleranz reichen z.B. für iOS-Bounce.
+    var TOP_THRESHOLD = 4;
+    var scrollTicking = false;
 
-    // progress ist jetzt ein fortlaufender Zustand (nicht mehr nur "0 im
-    // Ruhezustand, dann einmalig auf 1"), weil der Flug in BEIDE Richtungen
-    // laufen muss: scrollt man wieder nach oben, sollen die Karten wieder
-    // zurück in den Fächer fliegen.
+    // progress ist ein fortlaufender Zustand (nicht mehr nur "0 im
+    // Ruhezustand, dann einmalig auf 1"), weil der Rückflug von 1 aus
+    // starten können muss, sobald man wieder ganz oben ankommt.
     var progress = 0;
     var animating = false;
     var animStartProgress = 0;
@@ -219,42 +242,42 @@
       }
     }
 
-    // Ruhephase: nur solange progress exakt 0 ist UND nichts animiert, bei
-    // jedem Scroll-Event neu berechnet anhand der Live-Position von
-    // .hero-slot — dadurch scrollt das (fixed positionierte) Bild optisch
-    // ganz normal mit der Seite mit. Während eines Fluges (in egal welche
-    // Richtung) übernimmt stattdessen ausschließlich stepAnim() oben.
-    function requestRestUpdate() {
-      if (animating || progress !== 0 || restTicking) return;
-      restTicking = true;
-      window.requestAnimationFrame(function () {
-        restTicking = false;
-        if (!animating && progress === 0) applyProgress(0);
-      });
+    // Ein einziger, rAF-throttled Scroll-Handler statt separater Ruhephasen-
+    // Logik: solange man ruht (progress 0, nichts animiert), folgt das Bild
+    // per Live-Messung von .hero-slot ganz normal dem Scrollen. Zusätzlich
+    // und unabhängig davon: ist man wieder oberhalb von TOP_THRESHOLD, wird
+    // goTo(0) angestoßen — das ist die einzige Quelle für den Rückflug
+    // (siehe Datei-Kopf-Kommentar, Punkt 3).
+    function handleScroll() {
+      scrollTicking = false;
+      if (window.scrollY <= TOP_THRESHOLD) goTo(0);
+      if (!animating && progress === 0) applyProgress(0);
+    }
+
+    function requestScrollUpdate() {
+      if (scrollTicking) return;
+      scrollTicking = true;
+      window.requestAnimationFrame(handleScroll);
     }
 
     applyProgress(0);
-    window.addEventListener("scroll", requestRestUpdate, { passive: true });
-    window.addEventListener("resize", requestRestUpdate);
+    window.addEventListener("scroll", requestScrollUpdate, { passive: true });
+    window.addEventListener("resize", requestScrollUpdate);
 
     if (trustedSection && "IntersectionObserver" in window) {
-      // Beobachtet die "Trusted by"-Leiste selbst statt den Hero: Auslöser
-      // feuert, sobald sie beim Scrollen in das OBERE DRITTEL des
-      // Bildschirms eintritt (rootMargin verkleinert den Beobachtungsbereich
-      // auf [0, 33.3% vh]) — UND ebenso, sobald sie beim Zurückscrollen
-      // dieses Drittel wieder verlässt (isIntersecting wird dann wieder
-      // false). Der Observer bleibt deshalb dauerhaft aktiv (kein
-      // disconnect() mehr nach dem ersten Treffer) und steuert einfach
-      // goTo(1) bzw. goTo(0) an, je nachdem in welche Richtung man gerade
-      // scrollt — das ist die ganze "Rückwärts"-Logik.
-      // isIntersecting startet beim Laden mit false (die Leiste ist da noch
-      // unterhalb des Hero, außerhalb des Bildschirms) — das feuert zwar
-      // goTo(0), aber progress ist zu dem Zeitpunkt schon 0, goTo() ist dann
-      // ein reines No-Op (siehe Guard oben), kein Frühauslöse-Problem.
+      // Beobachtet die "Trusted by"-Leiste: Auslöser feuert NUR beim
+      // Eintreten in das obere Drittel des Bildschirms (rootMargin
+      // verkleinert den Beobachtungsbereich auf [0, 33.3% vh]) und dockt an
+      // (goTo(1)). Das Verlassen dieses Bereichs wird bewusst ignoriert —
+      // das passiert auch beim normalen Weiterscrollen nach unten, sobald
+      // die Leiste oben aus dem Bild läuft, und würde die Karten dann
+      // fälschlich mitten auf der Seite zurück in den Fächer schicken. Der
+      // Rückflug läuft ausschließlich über den TOP_THRESHOLD-Check in
+      // handleScroll() oben.
       var flightObserver = new IntersectionObserver(
         function (entries) {
           entries.forEach(function (entry) {
-            goTo(entry.isIntersecting ? 1 : 0);
+            if (entry.isIntersecting) goTo(1);
           });
         },
         { rootMargin: "0px 0px -66.6% 0px", threshold: 0 }
