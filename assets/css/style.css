@@ -2023,7 +2023,7 @@ button.btn {
 
   .team-grid { grid-template-columns: 1fr; }
 
-  .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 20px; }
 
   /* .footer-bottom hat 4 "logische" Elemente (Copyright, Impressum,
      Datenschutz, Innsbruck-Span — .footer-legal wird per display:contents
@@ -2040,6 +2040,8 @@ button.btn {
     align-items: center;
     text-align: center;
     gap: 10px;
+    margin-top: 40px;
+    padding-top: 20px;
   }
   .footer-bottom > span:first-child,
   .footer-bottom > span:last-child {
@@ -2056,6 +2058,15 @@ button.btn {
      Mobile ganz weg, statt die Werte nur zu verkleinern. */
   .header-fade,
   .footer-fade { display: none; }
+
+  /* .footer hat padding-top:96px/padding-bottom:260px als Puffer gegen
+     .header-fade/.footer-fade (siehe dort und Kommentar bei .footer) — die
+     Regel direkt darüber blendet beide auf Mobile komplett aus. Der Puffer
+     ist hier also größtenteils reiner Leerraum ohne Zweck, genau die
+     spürbare Lücke am Seitenende. Insgesamt spürbar enger, passend zum
+     sonst kompakteren Mobile-Rhythmus. */
+  .footer { padding-top: 64px; padding-bottom: 56px; }
+  .footer-big { margin-bottom: 40px; }
 
   /* .toolbox-orbit-wrap trägt zusätzlich zu "margin: auto" ein festes
      "left: 28px" (siehe dort), fein abgestimmt auf die zweispaltige
