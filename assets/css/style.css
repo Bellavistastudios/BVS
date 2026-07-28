@@ -535,17 +535,24 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 
 /* ---- Mobiles Menü ----
    Hamburger-Button + Vollbild-Overlay (siehe .nav-mobile-panel), Logik in
-   assets/js/nav-mobile.js. Button ist Geschwister von .logo-mark/.nav-pill
-   innerhalb von .site-header und wie das Logo per position:absolute
-   platziert — dieselbe rechte Kante wie .logo-mark links (32px, an
-   .container-Padding ausgerichtet), sonst nur ab 860px sichtbar. */
+   assets/js/nav-mobile.js. position:fixed statt absolute (bewusst, auch
+   wenn der Button optisch im Header sitzt): so hängt seine Position an
+   nichts als dem Viewport selbst und bleibt beim Öffnen/Schließen exakt an
+   derselben Stelle stehen, unabhängig von .site-headers eigenem
+   Stacking-Context/Sticky-Verhalten — ein früherer Versuch, stattdessen nur
+   den z-index von .site-header über .nav-mobile-panel zu heben, war
+   fehleranfällig (Button blieb je nach Stacking-Kontext trotzdem
+   verdeckt/versetzt). z-index 310 liegt bewusst über .nav-mobile-panel
+   (300), der Button bleibt dadurch auch bei geöffnetem Menü sichtbar UND
+   klickbar an derselben Position. Rechte Kante bündig mit .logo-mark links
+   (32px, an .container-Padding ausgerichtet), sonst nur ab 860px sichtbar. */
 .nav-mobile-toggle {
   display: none;
-  position: absolute;
+  position: fixed;
   right: 32px;
-  top: 50%;
+  top: 48px;
   transform: translateY(-50%);
-  z-index: 2;
+  z-index: 310;
   width: 40px;
   height: 40px;
   /* flex-direction:column nicht vergessen: die 3 Striche unten sind eigene
@@ -587,17 +594,20 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
 .nav-mobile-toggle.is-open span:nth-child(2) { opacity: 0; }
 .nav-mobile-toggle.is-open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
 
-/* Ganzflächiger, ruhiger Screen statt Karte/Blur (Konzept B): löst den Hero
-   komplett ab, kein Overlay-Gefühl, keine Verschwommenheit — passt zum
-   sonst reduzierten, unaufgeregten Look der Seite. Gleiches hidden-Muster
-   wie #team-modal (siehe dort) statt einer eigenen Sichtbarkeits-Logik. */
+/* Ganzflächiges Overlay mit Blur statt deckender Fläche: Hero bleibt schemenhaft
+   sichtbar, Panel wirkt wie Glas statt wie ein zweiter, eigenständiger Screen.
+   Fallback-Farbe (kein @supports nötig) ist ein transparenteres --bg für
+   Browser ohne backdrop-filter-Support. Gleiches hidden-Muster wie
+   #team-modal (siehe dort) statt einer eigenen Sichtbarkeits-Logik. */
 .nav-mobile-panel {
   position: fixed;
   inset: 0;
   z-index: 300;
   display: flex;
   align-items: center;
-  background: var(--bg);
+  background: rgba(250, 249, 246, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .nav-mobile-panel[hidden] { display: none; }
@@ -1965,18 +1975,10 @@ button.btn {
   .nav-pill { display: none; }
 
   /* Ersatz für die versteckte .nav-pill: Hamburger-Button rechts, öffnet
-     .nav-mobile-panel (siehe dort). */
+     .nav-mobile-panel (siehe dort). position:fixed + eigener z-index (siehe
+     .nav-mobile-toggle) macht ein z-index-Override von .site-header selbst
+     überflüssig. */
   .nav-mobile-toggle { display: flex; }
-
-  /* .nav-mobile-panel liegt bei z-index:300 über allem — ohne dieses
-     Override würde der ganze (position:sticky, eigene Stacking-Context)
-     .site-header samt Hamburger-Button dahinter verschwinden, sobald das
-     Menü aufgeht. Auf Mobile ist der Hamburger ohnehin das einzig sichtbare
-     Kind von .site-header (Logo/Pille siehe oben ausgeblendet) — derselbe
-     Button bleibt dadurch beim Öffnen exakt an derselben Stelle stehen und
-     morpht per .is-open (siehe dort) nur seinen Inhalt (Striche → X), statt
-     zu einem optisch versetzten, separaten Close-Button zu springen. */
-  .site-header { z-index: 301; }
 
   .projects-grid,
   .video-grid,
@@ -2003,6 +2005,13 @@ button.btn {
      schiebt genau dieser Wert den Kreis sichtbar aus der Mitte — hier
      zurückgesetzt, damit "margin: auto" ihn tatsächlich zentriert. */
   .toolbox-orbit-wrap { left: 0; }
+
+  /* .toolbox zentriert sich per flex:1 nur, wenn .services-intro noch Platz
+     zum Verteilen hat (Desktop: height:100% der Grid-Row, siehe dort). Im
+     einspaltigen Mobile-Layout hat die Spalte keine überschüssige Höhe mehr,
+     wodurch der Lede-Text ("...every phase.") und "OUR CREATIVE TOOLBOX"
+     ohne Abstand aneinanderkleben — hier fester Abstand statt Centering. */
+  .toolbox { margin-top: 40px; }
 
   /* Trusted-by auf Mobile: schmalere, kompaktere Leiste (weniger vertikales
      Padding) mit kleineren Logos und engerem Abstand, damit immer 3-4 Marken

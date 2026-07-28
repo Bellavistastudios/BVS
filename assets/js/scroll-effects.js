@@ -37,13 +37,18 @@
  * 1) Ruhephase: progress bleibt exakt 0, das Bild folgt per fixed-Position +
  *    Live-Messung von .hero-slot einfach ganz normal dem Scrollen (keine
  *    Schwellwert-Berechnung nötig, nur "wo ist der Slot gerade").
- * 2) Auslöser: ein IntersectionObserver auf .hero-visual (mit verkleinertem
- *    Root über rootMargin) meldet zuverlässig — unabhängig von vh-Wackeln —,
- *    wann der Fächer kurz davor ist, aus dem Bild zu scrollen.
- * 3) Flug: läuft danach EINMALIG zeitbasiert (requestAnimationFrame +
- *    performance.now(), MOBILE_FLIGHT_MS) zur Rasterposition, komplett
- *    unabhängig von weiterem Scrollen — dadurch immer exakt gleich lang und
- *    tatsächlich wahrnehmbar, egal wie schnell/langsam weitergescrollt wird.
+ * 2) Auslöser: ein dauerhaft aktiver IntersectionObserver auf .trusted (die
+ *    "Trusted by"-Leiste, verkleinerter Root über rootMargin) meldet
+ *    zuverlässig — unabhängig von vh-Wackeln —, sobald die Leiste beim
+ *    Scrollen in das obere Drittel des Bildschirms eintritt (Fortschritts-
+ *    Ziel 1) bzw. es beim Zurückscrollen wieder verlässt (Ziel 0) — der
+ *    Effekt läuft dadurch in beide Richtungen.
+ * 3) Flug: läuft danach zeitbasiert (requestAnimationFrame +
+ *    performance.now(), MOBILE_FLIGHT_MS) zur jeweiligen Zielposition,
+ *    komplett unabhängig von weiterem Scrollen — dadurch immer exakt gleich
+ *    lang und tatsächlich wahrnehmbar, egal wie schnell/langsam
+ *    weitergescrollt wird, und sauber umkehrbar, falls die Scrollrichtung
+ *    mitten im Flug wechselt.
  */
 (function () {
   "use strict";
@@ -94,7 +99,7 @@
 
   var grid = document.querySelector(".projects-grid");
   var hero = document.querySelector(".hero");
-  var heroVisual = document.querySelector(".hero-visual");
+  var trustedSection = document.querySelector(".trusted");
   // Nur die ursprünglichen 4 Karten animieren — die per Klick nachgeladenen
   // (.project-card--extra) haben kein passendes .hero-slot und bleiben außen vor.
   var cards = document.querySelectorAll(".projects-grid .project-card:not(.project-card--extra)");
@@ -162,80 +167,104 @@
   if (isMobileMode) {
     // ---- Mobile ----
     var MOBILE_FLIGHT_MS = 650;
-    var mobileTriggered = false;
-    var mobileAnimStart = 0;
     var restTicking = false;
+
+    // progress ist jetzt ein fortlaufender Zustand (nicht mehr nur "0 im
+    // Ruhezustand, dann einmalig auf 1"), weil der Flug in BEIDE Richtungen
+    // laufen muss: scrollt man wieder nach oben, sollen die Karten wieder
+    // zurück in den Fächer fliegen.
+    var progress = 0;
+    var animating = false;
+    var animStartProgress = 0;
+    var animTargetProgress = 0;
+    var animStartTime = 0;
 
     function easeOutCubic(t) {
       return 1 - Math.pow(1 - t, 3);
     }
+    function easeInCubic(t) {
+      return t * t * t;
+    }
 
-    // Ruhephase: progress bleibt konstant 0, folgt aber bei jedem Scroll-
-    // Event neu berechnet der Live-Position von .hero-slot — dadurch scrollt
-    // das (fixed positionierte) Bild optisch ganz normal mit der Seite mit,
-    // ohne dass irgendein Schwellwert erreicht werden müsste.
+    // Zielwert ansteuern (0 = zurück in den Fächer, 1 = angedockt im
+    // Raster) — läuft immer zeitbasiert über MOBILE_FLIGHT_MS, ausgehend
+    // vom AKTUELLEN Fortschritt (nicht zwingend 0 oder 1), damit ein
+    // Richtungswechsel mitten im Flug sauber umkehrt statt zu springen.
+    // easeOut beim Hinflug (Ankunft wird sanft abgebremst), easeIn beim
+    // Rückflug (Start aus der Ruhe wird sanft beschleunigt) — symmetrisches
+    // Bewegungsgefühl in beide Richtungen.
+    function goTo(target) {
+      if (!animating && progress === target) return;
+      animStartProgress = progress;
+      animTargetProgress = target;
+      animStartTime = performance.now();
+      if (!animating) {
+        animating = true;
+        window.requestAnimationFrame(stepAnim);
+      }
+    }
+
+    function stepAnim() {
+      var t = Math.min(1, (performance.now() - animStartTime) / MOBILE_FLIGHT_MS);
+      var goingForward = animTargetProgress > animStartProgress;
+      var eased = goingForward ? easeOutCubic(t) : easeInCubic(t);
+      progress = lerp(animStartProgress, animTargetProgress, eased);
+      applyProgress(progress);
+      if (t < 1) {
+        window.requestAnimationFrame(stepAnim);
+      } else {
+        progress = animTargetProgress;
+        applyProgress(progress);
+        animating = false;
+      }
+    }
+
+    // Ruhephase: nur solange progress exakt 0 ist UND nichts animiert, bei
+    // jedem Scroll-Event neu berechnet anhand der Live-Position von
+    // .hero-slot — dadurch scrollt das (fixed positionierte) Bild optisch
+    // ganz normal mit der Seite mit. Während eines Fluges (in egal welche
+    // Richtung) übernimmt stattdessen ausschließlich stepAnim() oben.
     function requestRestUpdate() {
-      if (mobileTriggered || restTicking) return;
+      if (animating || progress !== 0 || restTicking) return;
       restTicking = true;
       window.requestAnimationFrame(function () {
         restTicking = false;
-        if (!mobileTriggered) applyProgress(0);
+        if (!animating && progress === 0) applyProgress(0);
       });
-    }
-
-    // Flug: einmalig ausgelöst, läuft rein zeitbasiert über
-    // MOBILE_FLIGHT_MS zur Rasterposition — unabhängig davon, ob/wie schnell
-    // danach weitergescrollt wird.
-    function stepFlight() {
-      var t = Math.min(1, (performance.now() - mobileAnimStart) / MOBILE_FLIGHT_MS);
-      applyProgress(easeOutCubic(t));
-      if (t < 1) window.requestAnimationFrame(stepFlight);
-    }
-
-    function triggerFlight() {
-      if (mobileTriggered) return;
-      mobileTriggered = true;
-      mobileAnimStart = performance.now();
-      window.requestAnimationFrame(stepFlight);
     }
 
     applyProgress(0);
     window.addEventListener("scroll", requestRestUpdate, { passive: true });
     window.addEventListener("resize", requestRestUpdate);
 
-    if (heroVisual && "IntersectionObserver" in window) {
-      // .hero-visual verlässt das Bild beim Scrollen über die OBERE Kante
-      // (die Seite scrollt nach unten, der Fächer wandert nach oben aus dem
-      // Viewport) — der verkleinerte Beobachtungsbereich muss deshalb an der
-      // OBEREN Kante ansetzen (erstes Feld von rootMargin), nicht an der
-      // unteren wie im ursprünglichen (nicht funktionierenden) Versuch.
-      // Ein negativer oberer Wert zieht die effektive Ober-Kante des Roots
-      // um T Prozent der Bildschirmhöhe nach unten: der Auslöser feuert erst,
-      // sobald von .hero-visual nur noch dieser T%-Streifen oben im Bild
-      // übrig ist. Je KLEINER T, desto SPÄTER/knapper der Auslöser (bei T=10
-      // ist .hero-visual schon zu 90% verschwunden, bevor überhaupt etwas
-      // passiert) — genau umgekehrt zur ersten, falsch dimensionierten
-      // Fassung. Rein geometriebasiert (Position von .hero-visual relativ
-      // zum Viewport) — hängt an keiner Stelle von window.innerHeight zum
-      // Zeitpunkt der ersten Scroll-Geste ab, ist also unempfindlich gegen
-      // die iOS-Adressleiste.
+    if (trustedSection && "IntersectionObserver" in window) {
+      // Beobachtet die "Trusted by"-Leiste selbst statt den Hero: Auslöser
+      // feuert, sobald sie beim Scrollen in das OBERE DRITTEL des
+      // Bildschirms eintritt (rootMargin verkleinert den Beobachtungsbereich
+      // auf [0, 33.3% vh]) — UND ebenso, sobald sie beim Zurückscrollen
+      // dieses Drittel wieder verlässt (isIntersecting wird dann wieder
+      // false). Der Observer bleibt deshalb dauerhaft aktiv (kein
+      // disconnect() mehr nach dem ersten Treffer) und steuert einfach
+      // goTo(1) bzw. goTo(0) an, je nachdem in welche Richtung man gerade
+      // scrollt — das ist die ganze "Rückwärts"-Logik.
+      // isIntersecting startet beim Laden mit false (die Leiste ist da noch
+      // unterhalb des Hero, außerhalb des Bildschirms) — das feuert zwar
+      // goTo(0), aber progress ist zu dem Zeitpunkt schon 0, goTo() ist dann
+      // ein reines No-Op (siehe Guard oben), kein Frühauslöse-Problem.
       var flightObserver = new IntersectionObserver(
         function (entries) {
           entries.forEach(function (entry) {
-            if (!entry.isIntersecting) {
-              flightObserver.disconnect();
-              triggerFlight();
-            }
+            goTo(entry.isIntersecting ? 1 : 0);
           });
         },
-        { rootMargin: "-10% 0px 0px 0px", threshold: 0 }
+        { rootMargin: "0px 0px -66.6% 0px", threshold: 0 }
       );
-      flightObserver.observe(heroVisual);
+      flightObserver.observe(trustedSection);
     } else {
       // Kein IntersectionObserver verfügbar (sehr alter Browser) — Karten
       // bleiben dann einfach ruhig im Raster stehen, ohne Fächer-Effekt,
       // statt mit einer unsicheren Ersatzformel zu raten.
-      triggerFlight();
+      goTo(1);
     }
   } else {
     // ---- Desktop ----
