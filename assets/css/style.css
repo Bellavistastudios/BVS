@@ -1608,25 +1608,34 @@ button.btn {
    mask-image-Verlaufsmaske nur die äußersten Ränder der Box weich aus — das
    Wort selbst bleibt komplett sichtbar, nur der Übergang wirkt weich statt
    hart gekappt. */
+/* Vorher (inline-flex + top:50%/translateY(-50%)) hat das Wort geometrisch
+   MITTIG in der 1.3em-Box zentriert statt an der GRUNDLINIE ausgerichtet —
+   die Textgrundlinie eines Worts sitzt aber nicht auf halber Höhe seiner
+   Zeilenbox, sondern deutlich tiefer (Platz für Unterlängen oben). Dadurch
+   stand "visualized." sichtbar tiefer/höher als "deserves to be" davor.
+   inline-grid mit align-items:baseline lässt den Browser die drei
+   übereinanderliegenden Wörter (siehe grid-area unten, alle im selben
+   Grid-Feld) korrekt an ihrer eigenen Schriftgrundlinie ausrichten, exakt
+   wie normaler Fließtext — kein manuelles Pixel-Raten mehr nötig.
+   vertical-align:baseline hängt diese Grundlinie dann an die des
+   umgebenden Satzes. */
 .word-swipe {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
+  display: inline-grid;
+  align-items: baseline;
+  justify-items: start;
   width: 5.3em;
   height: 1.3em;
   overflow: hidden;
-  vertical-align: bottom;
+  vertical-align: baseline;
   mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
 }
 
 .word-swipe-item {
-  position: absolute;
-  left: 0;
-  top: 50%;
+  grid-area: 1 / 1;
   opacity: 0;
-  transform: translateY(calc(-50% + 14px));
+  transform: translateY(14px);
   filter: blur(6px);
   animation: word-swipe-cycle 6s infinite;
 }
@@ -1634,12 +1643,15 @@ button.btn {
 .word-swipe-item:nth-child(2) { animation-delay: 2s; }
 .word-swipe-item:nth-child(3) { animation-delay: 4s; }
 
+/* translateY bewegt sich jetzt relativ zur (bereits korrekten) Grundlinien-
+   Position statt relativ zu einem manuell zentrierten Nullpunkt — sonst
+   identisches Timing/Unschärfe wie vorher. */
 @keyframes word-swipe-cycle {
-  0%   { opacity: 0;   transform: translateY(calc(-50% + 14px)); filter: blur(6px); }
-  4%   { opacity: 0.6; transform: translateY(-50%);              filter: blur(0); }
-  29%  { opacity: 0.6; transform: translateY(-50%);              filter: blur(0); }
-  33%  { opacity: 0;   transform: translateY(calc(-50% - 14px)); filter: blur(6px); }
-  100% { opacity: 0;   transform: translateY(calc(-50% - 14px)); filter: blur(6px); }
+  0%   { opacity: 0;   transform: translateY(14px);  filter: blur(6px); }
+  4%   { opacity: 0.6; transform: translateY(0);      filter: blur(0); }
+  29%  { opacity: 0.6; transform: translateY(0);      filter: blur(0); }
+  33%  { opacity: 0;   transform: translateY(-14px);  filter: blur(6px); }
+  100% { opacity: 0;   transform: translateY(-14px);  filter: blur(6px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1696,6 +1708,21 @@ button.btn {
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* justify-content:space-between allein zentriert .footer-legal NICHT exakt
+   in der Mitte, sondern nur mit gleich GROSSEM Abstand zu beiden Seiten —
+   bei unterschiedlich breiten Außentexten (Copyright deutlich länger als
+   "Innsbruck, Austria") verschiebt das die Mitte spürbar. flex:1 auf beide
+   äußeren <span> lässt sie den kompletten übrigen Platz untereinander GLEICH
+   aufteilen, wodurch .footer-legal dazwischen zwangsläufig exakt mittig
+   landet, unabhängig von der Textlänge links/rechts. Nur Desktop — auf
+   Mobile (siehe Media Query unten) brechen die Elemente ohnehin in mehrere
+   Zeilen um, dort greift stattdessen die dortige Regel. */
+.footer-bottom > span:first-child,
+.footer-bottom > span:last-child {
+  flex: 1 0 0%;
+}
+.footer-bottom > span:last-child { text-align: right; }
 
 .footer-legal { display: flex; gap: 16px; }
 .footer-legal a:hover { color: var(--accent); }
@@ -1958,7 +1985,15 @@ button.btn {
   section { padding: 72px 0; }
 
   .hero-grid { grid-template-columns: 1fr; }
-  .hero-visual { height: 320px; margin-top: 24px; }
+
+  /* Der Fächer-Flug-Effekt (assets/js/scroll-effects.js) läuft bewusst nur
+     auf Desktop — auf Mobile nie zuverlässig flüssig zu bekommen, siehe
+     Kommentar dort. .hero-visual diente ausschließlich als unsichtbarer
+     Anker-Platz (.hero-slot) für diesen Effekt und hat auf Mobile ohne ihn
+     keine Funktion mehr, macht die Seite hier also nur unnötig lang. Die
+     4 Projekt-Karten bekommen stattdessen ganz normal den Scroll-Reveal
+     wie jede andere Karte auch (siehe scroll-reveal.js). */
+  .hero-visual { display: none; }
 
   .nav-links { display: none; }
 
@@ -1984,21 +2019,33 @@ button.btn {
   .video-grid,
   .image-grid { grid-template-columns: 1fr 1fr; }
 
-  /* Erlaubt der Fächer-Animation (siehe assets/js/scroll-effects.js), das
-     Bild per position:absolute innerhalb der eigenen (position:relative)
-     Karte an den Hero-Slot zu hängen, ohne von .project-cards
-     overflow:hidden abgeschnitten zu werden. Nur relevant, solange NICHT
-     angedockt — sobald is-docked gesetzt ist, greift wieder das normale
-     overflow:hidden (Rundung/Zuschnitt des fertigen Bilds). Nur mobile: der
-     Desktop-Zweig arbeitet ausschließlich mit position:fixed, das von
-     overflow:hidden ohnehin nie betroffen war. */
-  .projects-grid.js-morph:not(.is-docked) .project-card { overflow: visible; }
-
   .services-grid { grid-template-columns: 1fr; gap: 32px; }
 
   .team-grid { grid-template-columns: 1fr; }
 
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+
+  /* Nicht beabsichtigt: .footer-bottom hat 3 Kinder (Copyright,
+     .footer-legal, Innsbruck-Span). Passen auf schmalen Screens nicht mehr
+     alle drei in eine Zeile, bricht flex-wrap um — landet dann aber jedes
+     der 3 allein auf einer eigenen Zeile, und ein einzelnes Flex-Kind pro
+     Zeile hängt bei space-between links statt zentriert zu sein (nichts
+     davon war zentriert, "Datenschutz mittig" war reiner Zufall). Fix:
+     display:contents löst .footer-legal als Box auf, Impressum/Datenschutz
+     werden dadurch selbst zu direkten Kindern von .footer-bottom — Copyright
+     ist meist allein lang genug für eine eigene Zeile, Impressum/Datenschutz/
+     Innsbruck passen zusammen auf die nächste und space-between verteilt sie
+     dort gleichmäßig, Datenschutz landet als mittleres von drei Elementen
+     automatisch in der Mitte. Die Desktop-Regel (flex:1 auf Copyright/
+     Innsbruck, siehe dort) hier zurücksetzen — sonst zieht sich die
+     Innsbruck-Zeile über die volle Zeilenbreite und die 3 Wörter stehen
+     alle links geklumpt statt gleichmäßig verteilt. */
+  .footer-bottom > span:first-child,
+  .footer-bottom > span:last-child {
+    flex: initial;
+    text-align: left;
+  }
+  .footer-legal { display: contents; }
 
   /* Der Blur-Verlauf (.header-fade/.footer-fade, siehe dort) ist für den
      130px-Verlauf auf breiten Desktop-Viewports abgestimmt. Auf kleinen,
