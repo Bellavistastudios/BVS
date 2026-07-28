@@ -1984,6 +1984,16 @@ button.btn {
   .video-grid,
   .image-grid { grid-template-columns: 1fr 1fr; }
 
+  /* Erlaubt der Fächer-Animation (siehe assets/js/scroll-effects.js), das
+     Bild per position:absolute innerhalb der eigenen (position:relative)
+     Karte an den Hero-Slot zu hängen, ohne von .project-cards
+     overflow:hidden abgeschnitten zu werden. Nur relevant, solange NICHT
+     angedockt — sobald is-docked gesetzt ist, greift wieder das normale
+     overflow:hidden (Rundung/Zuschnitt des fertigen Bilds). Nur mobile: der
+     Desktop-Zweig arbeitet ausschließlich mit position:fixed, das von
+     overflow:hidden ohnehin nie betroffen war. */
+  .projects-grid.js-morph:not(.is-docked) .project-card { overflow: visible; }
+
   .services-grid { grid-template-columns: 1fr; gap: 32px; }
 
   .team-grid { grid-template-columns: 1fr; }
